@@ -32,6 +32,8 @@
 
 <div class="main-card">
 
+<!-- UPLOAD AREA -->
+
 <section class="upload-box">
 
 <label for="pdfUpload" id="dropZone" class="drop-zone">
@@ -47,10 +49,6 @@
 <div id="fileName" class="file-name"></div>
 
 </label>
-
-<button id="processBtn" class="primary-btn">
-Process PDF
-</button>
 
 </section>
 
@@ -84,6 +82,8 @@ Process PDF
 
 </section>
 
+<!-- SUMMARY -->
+
 <section class="summary">
 
 <h2>Size Summary</h2>
@@ -102,6 +102,8 @@ Process PDF
 </table>
 
 </section>
+
+<!-- DOWNLOAD -->
 
 <section class="download">
 
@@ -124,8 +126,8 @@ Download Size Wise ZIP
 <script>
 
 /* ===============================
-   UPLOAD + FILE INFORMATION
-================================ */
+UPLOAD + AUTO PROCESS
+=============================== */
 
 const dropZone = document.getElementById("dropZone");
 const uploadInput = document.getElementById("pdfUpload");
@@ -178,7 +180,7 @@ handleFile(files[0]);
 });
 
 
-/* FILE SELECT */
+/* BROWSE SELECT */
 
 uploadInput.addEventListener("change",()=>{
 
@@ -191,7 +193,7 @@ handleFile(uploadInput.files[0]);
 });
 
 
-/* HANDLE FILE */
+/* FILE HANDLER */
 
 async function handleFile(file){
 
@@ -202,31 +204,40 @@ infoBox.style.display = "block";
 infoName.innerText = file.name;
 
 const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-
 infoSize.innerText = sizeMB + " MB";
 
 const buffer = await file.arrayBuffer();
 
 const loadingTask = pdfjsLib.getDocument({data:buffer});
-
 const pdf = await loadingTask.promise;
 
 infoPages.innerText = pdf.numPages;
 
-/* auto process */
+/* AUTO PROCESS */
 
-setTimeout(()=>{
-
-document.getElementById("processBtn").click();
-
-},400);
+startProcessing();
 
 }
 
 
 /* ===============================
-   PROGRESS BAR OBSERVER
-================================ */
+START PROCESSING
+=============================== */
+
+function startProcessing(){
+
+const btn = document.getElementById("processBtn");
+
+if(btn){
+btn.click();
+}
+
+}
+
+
+/* ===============================
+PROGRESS BAR OBSERVER
+=============================== */
 
 const observer = new MutationObserver(()=>{
 
