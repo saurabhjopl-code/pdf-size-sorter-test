@@ -38,13 +38,9 @@
 
 <div class="upload-icon">📄</div>
 
-<div class="upload-title">
-Drag & Drop PDF
-</div>
+<div class="upload-title">Drag & Drop PDF</div>
 
-<div class="upload-sub">
-or click to browse file
-</div>
+<div class="upload-sub">or click to browse file</div>
 
 <input type="file" id="pdfUpload" accept="application/pdf">
 
@@ -89,7 +85,7 @@ Process PDF
 Download Sorted PDF
 </button>
 
-<button id="downloadZipBtn" class="secondary-btn" disabled>
+<button id="downloadZipBtn" class="primary-btn" disabled>
 Download Size Wise ZIP
 </button>
 
@@ -103,17 +99,15 @@ Download Size Wise ZIP
 
 <script>
 
-/* ===========================
-   DRAG & DROP + FILE NAME
-   =========================== */
+/* ========= FILE UPLOAD HANDLING ========= */
 
 const dropZone = document.getElementById("dropZone");
-const fileInput = document.getElementById("pdfUpload");
+const uploadInput = document.getElementById("pdfUpload");
 const fileNameDisplay = document.getElementById("fileName");
 
 /* DRAG OVER */
 
-dropZone.addEventListener("dragover", function(e){
+dropZone.addEventListener("dragover", (e)=>{
 
 e.preventDefault();
 dropZone.classList.add("drag-active");
@@ -122,15 +116,15 @@ dropZone.classList.add("drag-active");
 
 /* DRAG LEAVE */
 
-dropZone.addEventListener("dragleave", function(){
+dropZone.addEventListener("dragleave", ()=>{
 
 dropZone.classList.remove("drag-active");
 
 });
 
-/* DROP FILE */
+/* DROP */
 
-dropZone.addEventListener("drop", function(e){
+dropZone.addEventListener("drop", (e)=>{
 
 e.preventDefault();
 dropZone.classList.remove("drag-active");
@@ -139,10 +133,10 @@ const files = e.dataTransfer.files;
 
 if(files.length){
 
-const dataTransfer = new DataTransfer();
-dataTransfer.items.add(files[0]);
+const dt = new DataTransfer();
+dt.items.add(files[0]);
 
-fileInput.files = dataTransfer.files;
+uploadInput.files = dt.files;
 
 showFileName(files[0].name);
 
@@ -150,13 +144,13 @@ showFileName(files[0].name);
 
 });
 
-/* NORMAL FILE SELECT */
+/* BROWSE SELECT */
 
-fileInput.addEventListener("change", function(){
+uploadInput.addEventListener("change", ()=>{
 
-if(fileInput.files.length){
+if(uploadInput.files.length){
 
-showFileName(fileInput.files[0].name);
+showFileName(uploadInput.files[0].name);
 
 }
 
