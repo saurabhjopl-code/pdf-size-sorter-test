@@ -108,11 +108,12 @@ return normalizeSize(bestCandidate);
 
 /* ===============================
 FLIPKART SIZE EXTRACTOR
+(SUPPORTS -S_D FORMAT)
 =============================== */
 
 function extractFlipkartSize(items){
 
-const regex = /-(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|8XL|9XL|10XL)$/i;
+const regex = /-(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|8XL|9XL|10XL)/i;
 
 for(let item of items){
 
@@ -338,7 +339,6 @@ const url = URL.createObjectURL(blob);
 const a = document.createElement("a");
 a.href = url;
 a.download = "sorted_labels.pdf";
-
 a.click();
 
 });
