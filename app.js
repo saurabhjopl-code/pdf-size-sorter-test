@@ -230,11 +230,13 @@ a.click();
 
 downloadZipBtn.addEventListener("click", async () => {
 
-const zip = new JSZip();
+const file = fileInput.files[0];
+const originalBuffer = await file.arrayBuffer();
 
+const zip = new JSZip();
 const { PDFDocument } = PDFLib;
 
-const sourcePdf = await PDFDocument.load(sortedPdfBytes);
+const sourcePdf = await PDFDocument.load(originalBuffer);
 
 let sizePages = {};
 
