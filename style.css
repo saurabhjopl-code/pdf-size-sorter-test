@@ -41,12 +41,18 @@ margin-bottom:20px;
 }
 
 .drop-zone{
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+width:100%;
+min-height:140px;
 border:2px dashed #d0d0d0;
-border-radius:12px;
-padding:40px;
+border-radius:10px;
 background:#fafafa;
 cursor:pointer;
-transition:0.2s;
+padding:25px;
+text-align:center;
 }
 
 .drop-zone:hover
