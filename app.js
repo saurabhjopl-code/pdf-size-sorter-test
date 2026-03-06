@@ -107,22 +107,25 @@ return normalizeSize(bestCandidate);
 }
 
 /* ===============================
-FLIPKART SIZE EXTRACTOR
-(SUPPORTS -S_D FORMAT)
+FLIPKART SIZE EXTRACTOR (SAFE)
 =============================== */
 
 function extractFlipkartSize(items){
 
-const regex = /-(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|8XL|9XL|10XL)/i;
+const skuRegex = /([A-Z0-9]{6,})-(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|8XL|9XL|10XL)(_|$)/i;
 
 for(let item of items){
 
 const text = item.str.trim();
 
-const match = text.match(regex);
+const match = text.match(skuRegex);
 
 if(match){
-return normalizeSize(match[1]);
+
+const detectedSize = match[2];
+
+return normalizeSize(detectedSize);
+
 }
 
 }
