@@ -79,6 +79,27 @@ return normalizeSize(bestCandidate);
 
 }
 
+/* ===========================
+   NEW - SKU EXTRACTION
+   =========================== */
+
+function extractSKU(items){
+
+for(let item of items){
+
+const text = item.str.trim();
+
+if(!text) continue;
+
+/* marketplace SKU pattern */
+if(text.startsWith("JOP")) return text;
+
+}
+
+return "UNKNOWN";
+
+}
+
 processBtn.addEventListener("click", async () => {
 
 const file = fileInput.files[0];
@@ -108,6 +129,7 @@ const page = await pdf.getPage(i);
 const textContent = await page.getTextContent();
 
 let size = extractSize(textContent.items);
+let sku = extractSKU(textContent.items);
 
 if(!sizeOrder.includes(size)){
 otherSizes.add(size);
@@ -115,7 +137,8 @@ otherSizes.add(size);
 
 pages.push({
 pageNumber:i,
-size:size
+size:size,
+sku:sku
 });
 
 sizeCount[size] = (sizeCount[size] || 0) + 1;
@@ -124,19 +147,37 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 
 const sortedOtherSizes = Array.from(otherSizes).sort();
 
+/* ===========================
+   UPDATED SORT (SIZE → SKU)
+   =========================== */
+
 pages.sort((a,b)=>{
 
 const aInBucket = sizeOrder.includes(a.size);
 const bInBucket = sizeOrder.includes(b.size);
 
+/* both NON-SIZE */
 if(!aInBucket && !bInBucket){
-return a.size.localeCompare(b.size);
+
+if(a.size === b.size){
+return a.sku.localeCompare(b.sku);
 }
 
+return a.size.localeCompare(b.size);
+
+}
+
+/* push NON-SIZE last */
 if(!aInBucket) return 1;
 if(!bInBucket) return -1;
 
-return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
+/* compare size */
+const sizeCompare = sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
+
+if(sizeCompare !== 0) return sizeCompare;
+
+/* same size → sort by SKU */
+return a.sku.localeCompare(b.sku);
 
 });
 
@@ -225,7 +266,7 @@ a.click();
 
 
 /* ===========================
-   NEW FEATURE - SIZE ZIP
+   SIZE ZIP EXPORT
    =========================== */
 
 downloadZipBtn.addEventListener("click", async () => {
