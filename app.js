@@ -14,9 +14,9 @@ const sizeOrder = [
 "XXL","3XL","4XL","5XL","6XL","7XL","8XL","9XL","10XL"
 ];
 
-/* ==========================
+/* ===============================
 SIZE NORMALIZATION
-========================== */
+=============================== */
 
 function normalizeSize(size){
 
@@ -33,10 +33,9 @@ return "NON-SIZE";
 
 }
 
-/* ==========================
+/* ===============================
 LABEL TYPE DETECTION
-(Only page 1)
-========================== */
+=============================== */
 
 function detectLabelType(items){
 
@@ -44,7 +43,7 @@ for(let item of items){
 
 const text = item.str.toUpperCase();
 
-if(text.includes("SKU ID") && text.includes("DESCRIPTION")){
+if(text.includes("SKU ID") || text.includes("DESCRIPTION")){
 return "FLIPKART";
 }
 
@@ -54,9 +53,9 @@ return "MEESHO";
 
 }
 
-/* ==========================
+/* ===============================
 MEESHO SIZE EXTRACTOR
-========================== */
+=============================== */
 
 function extractMeeshoSize(items){
 
@@ -105,32 +104,23 @@ return normalizeSize(bestCandidate);
 
 }
 
-/* ==========================
+/* ===============================
 FLIPKART SIZE EXTRACTOR
-========================== */
+(NEW RELIABLE METHOD)
+=============================== */
 
 function extractFlipkartSize(items){
+
+const regex = /-(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|8XL|9XL|10XL)$/i;
 
 for(let item of items){
 
 const text = item.str.trim();
 
-if(text.includes("|")){
-
-const parts = text.split("|");
-
-if(parts.length){
-
-const sku = parts[0].trim();
-
-const match = sku.match(/-(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|8XL|9XL|10XL)$/i);
+const match = text.match(regex);
 
 if(match){
 return normalizeSize(match[1]);
-}
-
-}
-
 }
 
 }
@@ -139,9 +129,9 @@ return "NON-SIZE";
 
 }
 
-/* ==========================
+/* ===============================
 SIZE ROUTER
-========================== */
+=============================== */
 
 function extractSize(items){
 
@@ -153,9 +143,9 @@ return extractMeeshoSize(items);
 
 }
 
-/* ==========================
+/* ===============================
 PROCESS PDF
-========================== */
+=============================== */
 
 processBtn.addEventListener("click", async () => {
 
@@ -179,18 +169,18 @@ pages = [];
 let sizeCount = {};
 let otherSizes = new Set();
 
-/* ==========================
-DETECT LABEL TYPE
-========================== */
+/* ===============================
+DETECT LABEL TYPE (PAGE 1 ONLY)
+=============================== */
 
 const firstPage = await pdf.getPage(1);
 const firstContent = await firstPage.getTextContent();
 
 labelType = detectLabelType(firstContent.items);
 
-/* ==========================
+/* ===============================
 PROCESS PAGES
-========================== */
+=============================== */
 
 for(let i=1;i<=pdf.numPages;i++){
 
@@ -214,9 +204,9 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 
 }
 
-/* ==========================
+/* ===============================
 SORT PAGES
-========================== */
+=============================== */
 
 pages.sort((a,b)=>{
 
@@ -234,9 +224,9 @@ return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
 
 });
 
-/* ==========================
-BUILD PDF
-========================== */
+/* ===============================
+BUILD SORTED PDF
+=============================== */
 
 statusDiv.innerText = "Building sorted PDF...";
 
@@ -263,9 +253,9 @@ statusDiv.innerText = "Sorting complete";
 
 });
 
-/* ==========================
-SUMMARY
-========================== */
+/* ===============================
+SUMMARY TABLE
+=============================== */
 
 function renderSummary(counts, otherSizes){
 
@@ -311,9 +301,9 @@ summaryBody.appendChild(totalRow);
 
 }
 
-/* ==========================
+/* ===============================
 DOWNLOAD SORTED PDF
-========================== */
+=============================== */
 
 downloadBtn.addEventListener("click",()=>{
 
@@ -323,13 +313,14 @@ const url = URL.createObjectURL(blob);
 const a = document.createElement("a");
 a.href = url;
 a.download = "sorted_labels.pdf";
+
 a.click();
 
 });
 
-/* ==========================
+/* ===============================
 ZIP EXPORT
-========================== */
+=============================== */
 
 downloadZipBtn.addEventListener("click", async () => {
 
