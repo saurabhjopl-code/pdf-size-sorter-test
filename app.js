@@ -1,7 +1,4 @@
 const fileInput = document.getElementById("pdfUpload");
-if(processBtn){
-processBtn.addEventListener("click", startProcessing);
-}
 const downloadBtn = document.getElementById("downloadBtn");
 const downloadZipBtn = document.getElementById("downloadZipBtn");
 const statusDiv = document.getElementById("status");
@@ -13,11 +10,9 @@ const marketplaceName = document.getElementById("marketplaceName");
 const progressFill = document.getElementById("progressFill");
 
 fileInput.addEventListener("change", () => {
-
 if(fileInput.files.length){
 startProcessing();
 }
-
 });
 
 let sortedPdfBytes;
@@ -122,7 +117,7 @@ return normalizeSize(bestCandidate);
 }
 
 /* ===============================
-FLIPKART SIZE EXTRACTOR (SAFE)
+FLIPKART SIZE EXTRACTOR
 =============================== */
 
 function extractFlipkartSize(items){
@@ -182,10 +177,10 @@ size: size
 }
 
 /* ===============================
-PROCESS PDF (TURBO MODE)
+MAIN PROCESSING ENGINE
 =============================== */
 
-processBtn.addEventListener("click", async () => {
+async function startProcessing(){
 
 const file = fileInput.files[0];
 
@@ -207,19 +202,16 @@ pages = [];
 let sizeCount = {};
 let otherSizes = new Set();
 
-/* ===============================
-DETECT LABEL TYPE
-=============================== */
+/* DETECT MARKETPLACE */
 
 const firstPage = await pdf.getPage(1);
 const firstContent = await firstPage.getTextContent();
 
 labelType = detectLabelType(firstContent.items);
+
 updateMarketplaceUI(labelType);
 
-/* ===============================
-TURBO PAGE PROCESSING
-=============================== */
+/* PAGE PROCESSING */
 
 for(let i = 1; i <= pdf.numPages; i += BATCH_SIZE){
 
@@ -245,13 +237,14 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 
 });
 
-statusDiv.innerText = "Reading page " + Math.min(i+BATCH_SIZE-1, pdf.numPages) + " / " + pdf.numPages;
+statusDiv.innerText =
+"Reading page " + Math.min(i+BATCH_SIZE-1, pdf.numPages) + " / " + pdf.numPages;
+
+progressFill.style.width = ((i / pdf.numPages) * 100) + "%";
 
 }
 
-/* ===============================
-SORT PAGES
-=============================== */
+/* SORT */
 
 pages.sort((a,b)=>{
 
@@ -269,9 +262,7 @@ return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
 
 });
 
-/* ===============================
-BUILD SORTED PDF
-=============================== */
+/* BUILD PDF */
 
 statusDiv.innerText = "Building sorted PDF...";
 
@@ -296,7 +287,7 @@ downloadZipBtn.disabled = false;
 
 statusDiv.innerText = "Sorting complete";
 
-});
+}
 
 /* ===============================
 SUMMARY TABLE
@@ -392,10 +383,7 @@ for(const size in sizePages){
 
 const pdfDoc = await PDFDocument.create();
 
-const copiedPages = await pdfDoc.copyPages(
-sourcePdf,
-sizePages[size]
-);
+const copiedPages = await pdfDoc.copyPages(sourcePdf, sizePages[size]);
 
 copiedPages.forEach(p => pdfDoc.addPage(p));
 
@@ -417,8 +405,9 @@ a.download = "labels_by_size.zip";
 a.click();
 
 });
+
 /* ===============================
-MP LOGO UX
+MARKETPLACE LOGO UI
 =============================== */
 
 function updateMarketplaceUI(type){
@@ -431,7 +420,6 @@ marketplaceLogo.src = "assets/flipkart.png";
 marketplaceName.innerText = "Flipkart Labels";
 
 }
-
 else{
 
 marketplaceLogo.src = "assets/meesho.jpg";
