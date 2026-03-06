@@ -54,9 +54,33 @@ Process PDF
 
 </section>
 
+<!-- FILE INFO -->
+
+<section class="file-info" id="fileInfo" style="display:none">
+
+<div class="file-meta">
+
+<div><strong>File:</strong> <span id="infoName"></span></div>
+
+<div><strong>Size:</strong> <span id="infoSize"></span></div>
+
+<div><strong>Pages:</strong> <span id="infoPages">Scanning...</span></div>
+
+</div>
+
+</section>
+
+<!-- PROGRESS -->
+
 <section class="progress">
 
 <div id="status">Waiting for file...</div>
+
+<div class="progress-bar">
+
+<div id="progressFill"></div>
+
+</div>
 
 </section>
 
@@ -99,15 +123,24 @@ Download Size Wise ZIP
 
 <script>
 
-/* ========= FILE UPLOAD HANDLING ========= */
+/* ===============================
+   UPLOAD + FILE INFORMATION
+================================ */
 
 const dropZone = document.getElementById("dropZone");
 const uploadInput = document.getElementById("pdfUpload");
 const fileNameDisplay = document.getElementById("fileName");
 
+const infoBox = document.getElementById("fileInfo");
+const infoName = document.getElementById("infoName");
+const infoSize = document.getElementById("infoSize");
+const infoPages = document.getElementById("infoPages");
+
+const progressFill = document.getElementById("progressFill");
+
 /* DRAG OVER */
 
-dropZone.addEventListener("dragover", (e)=>{
+dropZone.addEventListener("dragover",(e)=>{
 
 e.preventDefault();
 dropZone.classList.add("drag-active");
@@ -116,15 +149,15 @@ dropZone.classList.add("drag-active");
 
 /* DRAG LEAVE */
 
-dropZone.addEventListener("dragleave", ()=>{
+dropZone.addEventListener("dragleave",()=>{
 
 dropZone.classList.remove("drag-active");
 
 });
 
-/* DROP */
+/* DROP FILE */
 
-dropZone.addEventListener("drop", (e)=>{
+dropZone.addEventListener("drop",(e)=>{
 
 e.preventDefault();
 dropZone.classList.remove("drag-active");
@@ -138,31 +171,89 @@ dt.items.add(files[0]);
 
 uploadInput.files = dt.files;
 
-showFileName(files[0].name);
+handleFile(files[0]);
 
 }
 
 });
 
-/* BROWSE SELECT */
 
-uploadInput.addEventListener("change", ()=>{
+/* FILE SELECT */
+
+uploadInput.addEventListener("change",()=>{
 
 if(uploadInput.files.length){
 
-showFileName(uploadInput.files[0].name);
+handleFile(uploadInput.files[0]);
 
 }
 
 });
 
-/* SHOW FILE NAME */
 
-function showFileName(name){
+/* HANDLE FILE */
 
-fileNameDisplay.innerText = "Loaded File: " + name;
+async function handleFile(file){
+
+fileNameDisplay.innerText = "Loaded File: " + file.name;
+
+infoBox.style.display = "block";
+
+infoName.innerText = file.name;
+
+const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+
+infoSize.innerText = sizeMB + " MB";
+
+const buffer = await file.arrayBuffer();
+
+const loadingTask = pdfjsLib.getDocument({data:buffer});
+
+const pdf = await loadingTask.promise;
+
+infoPages.innerText = pdf.numPages;
+
+/* auto process */
+
+setTimeout(()=>{
+
+document.getElementById("processBtn").click();
+
+},400);
 
 }
+
+
+/* ===============================
+   PROGRESS BAR OBSERVER
+================================ */
+
+const observer = new MutationObserver(()=>{
+
+const text = document.getElementById("status").innerText;
+
+const match = text.match(/page (\d+) \/ (\d+)/i);
+
+if(match){
+
+const current = parseInt(match[1]);
+const total = parseInt(match[2]);
+
+const percent = (current/total)*100;
+
+progressFill.style.width = percent + "%";
+
+}
+
+if(text.includes("Sorting complete")){
+progressFill.style.width = "100%";
+}
+
+});
+
+observer.observe(document.getElementById("status"),{
+childList:true
+});
 
 </script>
 
