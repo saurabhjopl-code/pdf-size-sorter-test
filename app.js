@@ -55,7 +55,7 @@ for(let item of items){
 
 const text = item.str.toUpperCase();
 
-if(text.includes("SKU ID") || text.includes("DESCRIPTION")){
+if(text.includes("SKU ID | DESCRIPTION")){
 return "FLIPKART";
 }
 
