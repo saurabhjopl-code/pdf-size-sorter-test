@@ -34,15 +34,19 @@
 
 <div id="dropZone" class="drop-zone">
 
-<div class="drop-text">
-Drag & Drop PDF Here
+<div class="upload-icon">📄</div>
+
+<div class="upload-title">
+Drag & Drop PDF File
 </div>
 
-<div class="drop-sub">
-or click below to choose file
+<div class="upload-sub">
+or click to browse
 </div>
 
 <input type="file" id="pdfUpload" accept="application/pdf">
+
+<div id="fileName" class="file-name"></div>
 
 </div>
 
@@ -91,38 +95,64 @@ Download Size Wise ZIP
 
 <script>
 
-/* Drag & Drop Upload */
+/* ===========================
+   DRAG & DROP + FILE DISPLAY
+   =========================== */
 
 const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("pdfUpload");
+const fileNameDisplay = document.getElementById("fileName");
 
-dropZone.addEventListener("dragover", function(e){
-
-e.preventDefault();
-dropZone.classList.add("drag-over");
-
+/* click upload */
+dropZone.addEventListener("click", () => {
+fileInput.click();
 });
 
-dropZone.addEventListener("dragleave", function(){
-
-dropZone.classList.remove("drag-over");
-
+/* drag highlight */
+dropZone.addEventListener("dragover", (e)=>{
+e.preventDefault();
+dropZone.classList.add("drag-active");
 });
 
-dropZone.addEventListener("drop", function(e){
+dropZone.addEventListener("dragleave", ()=>{
+dropZone.classList.remove("drag-active");
+});
+
+/* drop file */
+dropZone.addEventListener("drop", (e)=>{
 
 e.preventDefault();
-
-dropZone.classList.remove("drag-over");
+dropZone.classList.remove("drag-active");
 
 const files = e.dataTransfer.files;
 
 if(files.length){
 
-document.getElementById("pdfUpload").files = files;
+fileInput.files = files;
+showFileName(files[0].name);
 
 }
 
 });
+
+/* normal upload */
+fileInput.addEventListener("change", ()=>{
+
+if(fileInput.files.length){
+
+showFileName(fileInput.files[0].name);
+
+}
+
+});
+
+/* show file name */
+
+function showFileName(name){
+
+fileNameDisplay.innerText = "Loaded File: " + name;
+
+}
 
 </script>
 
