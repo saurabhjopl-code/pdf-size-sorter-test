@@ -80,8 +80,11 @@ font-weight:500;
 }
 
 #pdfUpload{
-display:none;
+opacity:0;
+position:absolute;
+pointer-events:none;
 }
+
 
 .primary-btn{
 background:#2563eb;
