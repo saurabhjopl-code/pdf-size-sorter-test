@@ -9,6 +9,8 @@ let sortedPdfBytes;
 let pages = [];
 let labelType = "MEESHO";
 
+const BATCH_SIZE = 5;
+
 const sizeOrder = [
 "XS","S","M","L","XL",
 "XXL","3XL","4XL","5XL","6XL","7XL","8XL","9XL","10XL"
@@ -106,7 +108,6 @@ return normalizeSize(bestCandidate);
 
 /* ===============================
 FLIPKART SIZE EXTRACTOR
-(NEW RELIABLE METHOD)
 =============================== */
 
 function extractFlipkartSize(items){
@@ -144,7 +145,25 @@ return extractMeeshoSize(items);
 }
 
 /* ===============================
-PROCESS PDF
+PROCESS SINGLE PAGE
+=============================== */
+
+async function processPage(pdf, pageNumber){
+
+const page = await pdf.getPage(pageNumber);
+const textContent = await page.getTextContent();
+
+let size = extractSize(textContent.items);
+
+return {
+pageNumber: pageNumber,
+size: size
+};
+
+}
+
+/* ===============================
+PROCESS PDF (TURBO MODE)
 =============================== */
 
 processBtn.addEventListener("click", async () => {
@@ -170,7 +189,7 @@ let sizeCount = {};
 let otherSizes = new Set();
 
 /* ===============================
-DETECT LABEL TYPE (PAGE 1 ONLY)
+DETECT LABEL TYPE
 =============================== */
 
 const firstPage = await pdf.getPage(1);
@@ -179,28 +198,34 @@ const firstContent = await firstPage.getTextContent();
 labelType = detectLabelType(firstContent.items);
 
 /* ===============================
-PROCESS PAGES
+TURBO PAGE PROCESSING
 =============================== */
 
-for(let i=1;i<=pdf.numPages;i++){
+for(let i = 1; i <= pdf.numPages; i += BATCH_SIZE){
 
-statusDiv.innerText = "Reading page " + i + " / " + pdf.numPages;
+const batch = [];
 
-const page = await pdf.getPage(i);
-const textContent = await page.getTextContent();
+for(let j = i; j < i + BATCH_SIZE && j <= pdf.numPages; j++){
+batch.push(processPage(pdf, j));
+}
 
-let size = extractSize(textContent.items);
+const results = await Promise.all(batch);
+
+results.forEach(result => {
+
+const size = result.size;
 
 if(!sizeOrder.includes(size)){
 otherSizes.add(size);
 }
 
-pages.push({
-pageNumber:i,
-size:size
-});
+pages.push(result);
 
 sizeCount[size] = (sizeCount[size] || 0) + 1;
+
+});
+
+statusDiv.innerText = "Reading page " + Math.min(i+BATCH_SIZE-1, pdf.numPages) + " / " + pdf.numPages;
 
 }
 
