@@ -205,6 +205,7 @@ const firstPage = await pdf.getPage(1);
 const firstContent = await firstPage.getTextContent();
 
 labelType = detectLabelType(firstContent.items);
+updateMarketplaceUI(labelType);
 
 /* ===============================
 TURBO PAGE PROCESSING
