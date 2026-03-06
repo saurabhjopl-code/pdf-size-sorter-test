@@ -1,10 +1,12 @@
 const fileInput = document.getElementById("pdfUpload");
 const processBtn = document.getElementById("processBtn");
 const downloadBtn = document.getElementById("downloadBtn");
+const downloadZipBtn = document.getElementById("downloadZipBtn");
 const statusDiv = document.getElementById("status");
 const summaryBody = document.querySelector("#summaryTable tbody");
 
 let sortedPdfBytes;
+let pages = [];   // added to store page mapping
 
 const sizeOrder = [
 "XS","S","M","L","XL",
@@ -94,7 +96,7 @@ const pdfBuffer = arrayBuffer.slice(0);
 const loadingTask = pdfjsLib.getDocument({data: pdfBuffer});
 const pdf = await loadingTask.promise;
 
-let pages = [];
+pages = [];
 let sizeCount = {};
 let otherSizes = new Set();
 
@@ -157,6 +159,7 @@ sortedPdfBytes = await newPdf.save();
 renderSummary(sizeCount, sortedOtherSizes);
 
 downloadBtn.disabled = false;
+downloadZipBtn.disabled = false;
 
 statusDiv.innerText = "Sorting complete";
 
@@ -215,6 +218,61 @@ const a = document.createElement("a");
 
 a.href = url;
 a.download = "sorted_labels.pdf";
+
+a.click();
+
+});
+
+
+/* ===========================
+   NEW FEATURE - SIZE ZIP
+   =========================== */
+
+downloadZipBtn.addEventListener("click", async () => {
+
+const zip = new JSZip();
+
+const { PDFDocument } = PDFLib;
+
+const sourcePdf = await PDFDocument.load(sortedPdfBytes);
+
+let sizePages = {};
+
+pages.forEach(p => {
+
+if(!sizePages[p.size]){
+sizePages[p.size] = [];
+}
+
+sizePages[p.size].push(p.pageNumber-1);
+
+});
+
+for(const size in sizePages){
+
+const pdfDoc = await PDFDocument.create();
+
+const copiedPages = await pdfDoc.copyPages(
+sourcePdf,
+sizePages[size]
+);
+
+copiedPages.forEach(p => pdfDoc.addPage(p));
+
+const pdfBytes = await pdfDoc.save();
+
+zip.file(size + ".pdf", pdfBytes);
+
+}
+
+const zipBlob = await zip.generateAsync({type:"blob"});
+
+const url = URL.createObjectURL(zipBlob);
+
+const a = document.createElement("a");
+
+a.href = url;
+a.download = "labels_by_size.zip";
 
 a.click();
 
