@@ -32,7 +32,7 @@
 
 <div class="main-card">
 
-<!-- UPLOAD AREA -->
+<!-- UPLOAD -->
 
 <section class="upload-box">
 
@@ -49,6 +49,10 @@
 <div id="fileName" class="file-name"></div>
 
 </label>
+
+<!-- hidden button required for app.js -->
+
+<button id="processBtn" style="display:none"></button>
 
 </section>
 
@@ -75,9 +79,7 @@
 <div id="status">Waiting for file...</div>
 
 <div class="progress-bar">
-
 <div id="progressFill"></div>
-
 </div>
 
 </section>
@@ -140,24 +142,23 @@ const infoPages = document.getElementById("infoPages");
 
 const progressFill = document.getElementById("progressFill");
 
+
 /* DRAG OVER */
 
 dropZone.addEventListener("dragover",(e)=>{
-
 e.preventDefault();
 dropZone.classList.add("drag-active");
-
 });
+
 
 /* DRAG LEAVE */
 
 dropZone.addEventListener("dragleave",()=>{
-
 dropZone.classList.remove("drag-active");
-
 });
 
-/* DROP FILE */
+
+/* DROP */
 
 dropZone.addEventListener("drop",(e)=>{
 
@@ -180,14 +181,12 @@ handleFile(files[0]);
 });
 
 
-/* BROWSE SELECT */
+/* BROWSE */
 
 uploadInput.addEventListener("change",()=>{
 
 if(uploadInput.files.length){
-
 handleFile(uploadInput.files[0]);
-
 }
 
 });
@@ -213,30 +212,18 @@ const pdf = await loadingTask.promise;
 
 infoPages.innerText = pdf.numPages;
 
-/* AUTO PROCESS */
 
-startProcessing();
+/* AUTO START PROCESS */
 
-}
-
-
-/* ===============================
-START PROCESSING
-=============================== */
-
-function startProcessing(){
-
-const btn = document.getElementById("processBtn");
-
-if(btn){
-btn.click();
-}
+setTimeout(()=>{
+document.getElementById("processBtn").click();
+},300);
 
 }
 
 
 /* ===============================
-PROGRESS BAR OBSERVER
+PROGRESS BAR
 =============================== */
 
 const observer = new MutationObserver(()=>{
