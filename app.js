@@ -406,3 +406,26 @@ a.download = "labels_by_size.zip";
 a.click();
 
 });
+/* ===============================
+MP LOGO UX
+=============================== */
+
+function updateMarketplaceUI(type){
+
+marketplaceSection.style.display = "block";
+
+if(type === "FLIPKART"){
+
+marketplaceLogo.src = "assets/flipkart.png";
+marketplaceName.innerText = "Flipkart Labels";
+
+}
+
+else{
+
+marketplaceLogo.src = "assets/meesho.jpg";
+marketplaceName.innerText = "Meesho Labels";
+
+}
+
+}
