@@ -22,11 +22,11 @@
 
 <div class="container">
 
-<header class="app-header">
+<header>
 
 <img src="assets/logo.png" class="logo">
 
-<h1 class="app-title">PDF Label Size Sorter</h1>
+<h1>PDF Label Size Sorter</h1>
 
 </header>
 
@@ -34,9 +34,13 @@
 
 <div id="dropZone" class="drop-zone">
 
-<p class="drop-main">Drag & Drop PDF Here</p>
+<div class="drop-text">
+Drag & Drop PDF Here
+</div>
 
-<p class="drop-sub">or click below to choose file</p>
+<div class="drop-sub">
+or click below to choose file
+</div>
 
 <input type="file" id="pdfUpload" accept="application/pdf">
 
@@ -87,36 +91,34 @@ Download Size Wise ZIP
 
 <script>
 
-/* ===============================
-   DRAG & DROP PDF UPLOAD
-   =============================== */
+/* Drag & Drop Upload */
 
 const dropZone = document.getElementById("dropZone");
-const fileInput = document.getElementById("pdfUpload");
 
-dropZone.addEventListener("dragover", (e)=>{
+dropZone.addEventListener("dragover", function(e){
 
 e.preventDefault();
-dropZone.classList.add("drag-active");
+dropZone.classList.add("drag-over");
 
 });
 
-dropZone.addEventListener("dragleave", ()=>{
+dropZone.addEventListener("dragleave", function(){
 
-dropZone.classList.remove("drag-active");
+dropZone.classList.remove("drag-over");
 
 });
 
-dropZone.addEventListener("drop", (e)=>{
+dropZone.addEventListener("drop", function(e){
 
 e.preventDefault();
-dropZone.classList.remove("drag-active");
+
+dropZone.classList.remove("drag-over");
 
 const files = e.dataTransfer.files;
 
 if(files.length){
 
-fileInput.files = files;
+document.getElementById("pdfUpload").files = files;
 
 }
 
