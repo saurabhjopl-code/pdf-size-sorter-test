@@ -20,15 +20,17 @@
 
 <body>
 
-<div class="container">
+<div class="app">
 
-<header>
+<header class="top-header">
 
 <img src="assets/logo.png" class="logo">
 
-<h1>PDF Label Size Sorter</h1>
+<h1 class="title">PDF Label Size Sorter</h1>
 
 </header>
+
+<div class="main-card">
 
 <section class="upload-box">
 
@@ -37,11 +39,11 @@
 <div class="upload-icon">📄</div>
 
 <div class="upload-title">
-Drag & Drop PDF File
+Drag & Drop PDF
 </div>
 
 <div class="upload-sub">
-or click to browse
+or click to browse file
 </div>
 
 <input type="file" id="pdfUpload" accept="application/pdf">
@@ -50,7 +52,9 @@ or click to browse
 
 </div>
 
-<button id="processBtn">Process PDF</button>
+<button id="processBtn" class="primary-btn">
+Process PDF
+</button>
 
 </section>
 
@@ -81,9 +85,11 @@ or click to browse
 
 <section class="download">
 
-<button id="downloadBtn" disabled>Download Sorted PDF</button>
+<button id="downloadBtn" class="primary-btn" disabled>
+Download Sorted PDF
+</button>
 
-<button id="downloadZipBtn" disabled>
+<button id="downloadZipBtn" class="secondary-btn" disabled>
 Download Size Wise ZIP
 </button>
 
@@ -91,24 +97,22 @@ Download Size Wise ZIP
 
 </div>
 
+</div>
+
 <script src="app.js"></script>
 
 <script>
 
-/* ===========================
-   DRAG & DROP + FILE DISPLAY
-   =========================== */
+/* Drag & Drop Upload */
 
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("pdfUpload");
 const fileNameDisplay = document.getElementById("fileName");
 
-/* click upload */
 dropZone.addEventListener("click", () => {
 fileInput.click();
 });
 
-/* drag highlight */
 dropZone.addEventListener("dragover", (e)=>{
 e.preventDefault();
 dropZone.classList.add("drag-active");
@@ -118,7 +122,6 @@ dropZone.addEventListener("dragleave", ()=>{
 dropZone.classList.remove("drag-active");
 });
 
-/* drop file */
 dropZone.addEventListener("drop", (e)=>{
 
 e.preventDefault();
@@ -129,13 +132,13 @@ const files = e.dataTransfer.files;
 if(files.length){
 
 fileInput.files = files;
+
 showFileName(files[0].name);
 
 }
 
 });
 
-/* normal upload */
 fileInput.addEventListener("change", ()=>{
 
 if(fileInput.files.length){
@@ -145,8 +148,6 @@ showFileName(fileInput.files[0].name);
 }
 
 });
-
-/* show file name */
 
 function showFileName(name){
 
