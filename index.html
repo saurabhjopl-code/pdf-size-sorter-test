@@ -34,7 +34,7 @@
 
 <section class="upload-box">
 
-<div id="dropZone" class="drop-zone">
+<label for="pdfUpload" id="dropZone" class="drop-zone">
 
 <div class="upload-icon">📄</div>
 
@@ -50,7 +50,7 @@ or click to browse file
 
 <div id="fileName" class="file-name"></div>
 
-</div>
+</label>
 
 <button id="processBtn" class="primary-btn">
 Process PDF
@@ -103,17 +103,13 @@ Download Size Wise ZIP
 
 <script>
 
+/* ===========================
+   DRAG & DROP + FILE NAME
+   =========================== */
+
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("pdfUpload");
 const fileNameDisplay = document.getElementById("fileName");
-
-/* CLICK TO OPEN FILE BROWSER */
-
-dropZone.addEventListener("click", function(){
-
-fileInput.click();
-
-});
 
 /* DRAG OVER */
 
@@ -137,7 +133,6 @@ dropZone.classList.remove("drag-active");
 dropZone.addEventListener("drop", function(e){
 
 e.preventDefault();
-
 dropZone.classList.remove("drag-active");
 
 const files = e.dataTransfer.files;
@@ -176,7 +171,6 @@ fileNameDisplay.innerText = "Loaded File: " + name;
 }
 
 </script>
-
 
 </body>
 </html>
