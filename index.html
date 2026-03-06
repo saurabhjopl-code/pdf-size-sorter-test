@@ -32,8 +32,6 @@
 
 <div class="main-card">
 
-<!-- UPLOAD -->
-
 <section class="upload-box">
 
 <label for="pdfUpload" id="dropZone" class="drop-zone">
@@ -50,29 +48,25 @@
 
 </label>
 
-<!-- hidden button required for app.js -->
-
-<button id="processBtn" style="display:none"></button>
-
 </section>
 
-<!-- FILE INFO -->
+<!-- MARKETPLACE BADGE -->
 
-<section class="file-info" id="fileInfo" style="display:none">
+<section id="marketplaceSection" class="marketplace-section" style="display:none;">
 
-<div class="file-meta">
+<div class="marketplace-card">
 
-<div><strong>File:</strong> <span id="infoName"></span></div>
+<div class="marketplace-label">
+Marketplace Detected
+</div>
 
-<div><strong>Size:</strong> <span id="infoSize"></span></div>
+<img id="marketplaceLogo" class="marketplace-logo">
 
-<div><strong>Pages:</strong> <span id="infoPages">Scanning...</span></div>
+<div id="marketplaceName" class="marketplace-name"></div>
 
 </div>
 
 </section>
-
-<!-- PROGRESS -->
 
 <section class="progress">
 
@@ -83,8 +77,6 @@
 </div>
 
 </section>
-
-<!-- SUMMARY -->
 
 <section class="summary">
 
@@ -104,8 +96,6 @@
 </table>
 
 </section>
-
-<!-- DOWNLOAD -->
 
 <section class="download">
 
@@ -127,36 +117,28 @@ Download Size Wise ZIP
 
 <script>
 
-/* ===============================
-UPLOAD + AUTO PROCESS
-=============================== */
+/* ========= FILE UPLOAD HANDLING ========= */
 
 const dropZone = document.getElementById("dropZone");
 const uploadInput = document.getElementById("pdfUpload");
 const fileNameDisplay = document.getElementById("fileName");
 
-const infoBox = document.getElementById("fileInfo");
-const infoName = document.getElementById("infoName");
-const infoSize = document.getElementById("infoSize");
-const infoPages = document.getElementById("infoPages");
-
-const progressFill = document.getElementById("progressFill");
-
-
 /* DRAG OVER */
 
 dropZone.addEventListener("dragover",(e)=>{
+
 e.preventDefault();
 dropZone.classList.add("drag-active");
-});
 
+});
 
 /* DRAG LEAVE */
 
 dropZone.addEventListener("dragleave",()=>{
-dropZone.classList.remove("drag-active");
-});
 
+dropZone.classList.remove("drag-active");
+
+});
 
 /* DROP */
 
@@ -174,84 +156,31 @@ dt.items.add(files[0]);
 
 uploadInput.files = dt.files;
 
-handleFile(files[0]);
+showFileName(files[0].name);
+
+uploadInput.dispatchEvent(new Event("change"));
 
 }
 
 });
 
-
-/* BROWSE */
+/* FILE SELECT */
 
 uploadInput.addEventListener("change",()=>{
 
 if(uploadInput.files.length){
-handleFile(uploadInput.files[0]);
+
+showFileName(uploadInput.files[0].name);
+
 }
 
 });
 
+function showFileName(name){
 
-/* FILE HANDLER */
-
-async function handleFile(file){
-
-fileNameDisplay.innerText = "Loaded File: " + file.name;
-
-infoBox.style.display = "block";
-
-infoName.innerText = file.name;
-
-const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-infoSize.innerText = sizeMB + " MB";
-
-const buffer = await file.arrayBuffer();
-
-const loadingTask = pdfjsLib.getDocument({data:buffer});
-const pdf = await loadingTask.promise;
-
-infoPages.innerText = pdf.numPages;
-
-
-/* AUTO START PROCESS */
-
-setTimeout(()=>{
-document.getElementById("processBtn").click();
-},300);
+fileNameDisplay.innerText = "Loaded File: " + name;
 
 }
-
-
-/* ===============================
-PROGRESS BAR
-=============================== */
-
-const observer = new MutationObserver(()=>{
-
-const text = document.getElementById("status").innerText;
-
-const match = text.match(/page (\d+) \/ (\d+)/i);
-
-if(match){
-
-const current = parseInt(match[1]);
-const total = parseInt(match[2]);
-
-const percent = (current/total)*100;
-
-progressFill.style.width = percent + "%";
-
-}
-
-if(text.includes("Sorting complete")){
-progressFill.style.width = "100%";
-}
-
-});
-
-observer.observe(document.getElementById("status"),{
-childList:true
-});
 
 </script>
 
