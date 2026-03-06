@@ -5,6 +5,11 @@ const downloadZipBtn = document.getElementById("downloadZipBtn");
 const statusDiv = document.getElementById("status");
 const summaryBody = document.querySelector("#summaryTable tbody");
 
+const marketplaceSection = document.getElementById("marketplaceSection");
+const marketplaceLogo = document.getElementById("marketplaceLogo");
+const marketplaceName = document.getElementById("marketplaceName");
+const progressFill = document.getElementById("progressFill");
+
 let sortedPdfBytes;
 let pages = [];
 let labelType = "MEESHO";
