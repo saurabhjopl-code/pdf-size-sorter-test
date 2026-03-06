@@ -103,35 +103,51 @@ Download Size Wise ZIP
 
 <script>
 
-/* Drag & Drop Upload */
-
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("pdfUpload");
 const fileNameDisplay = document.getElementById("fileName");
 
-dropZone.addEventListener("click", () => {
+/* CLICK TO OPEN FILE BROWSER */
+
+dropZone.addEventListener("click", function(){
+
 fileInput.click();
+
 });
 
-dropZone.addEventListener("dragover", (e)=>{
+/* DRAG OVER */
+
+dropZone.addEventListener("dragover", function(e){
+
 e.preventDefault();
 dropZone.classList.add("drag-active");
+
 });
 
-dropZone.addEventListener("dragleave", ()=>{
+/* DRAG LEAVE */
+
+dropZone.addEventListener("dragleave", function(){
+
 dropZone.classList.remove("drag-active");
+
 });
 
-dropZone.addEventListener("drop", (e)=>{
+/* DROP FILE */
+
+dropZone.addEventListener("drop", function(e){
 
 e.preventDefault();
+
 dropZone.classList.remove("drag-active");
 
 const files = e.dataTransfer.files;
 
 if(files.length){
 
-fileInput.files = files;
+const dataTransfer = new DataTransfer();
+dataTransfer.items.add(files[0]);
+
+fileInput.files = dataTransfer.files;
 
 showFileName(files[0].name);
 
@@ -139,7 +155,9 @@ showFileName(files[0].name);
 
 });
 
-fileInput.addEventListener("change", ()=>{
+/* NORMAL FILE SELECT */
+
+fileInput.addEventListener("change", function(){
 
 if(fileInput.files.length){
 
@@ -149,6 +167,8 @@ showFileName(fileInput.files[0].name);
 
 });
 
+/* SHOW FILE NAME */
+
 function showFileName(name){
 
 fileNameDisplay.innerText = "Loaded File: " + name;
@@ -156,6 +176,7 @@ fileNameDisplay.innerText = "Loaded File: " + name;
 }
 
 </script>
+
 
 </body>
 </html>
