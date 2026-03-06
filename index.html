@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PDF Size Sorter</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+
+<img src="assets/logo.png" class="logo">
+
+<h1>PDF Label Size Sorter</h1>
+
+</header>
+
+<section class="upload-box">
+
+<input type="file" id="pdfUpload" accept="application/pdf">
+
+<button id="processBtn">Process PDF</button>
+
+</section>
+
+<section class="progress">
+
+<div id="status">Waiting for file...</div>
+
+</section>
+
+<section class="summary">
+
+<h2>Size Summary</h2>
+
+<table id="summaryTable">
+
+<thead>
+<tr>
+<th>Size</th>
+<th>Count</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</section>
+
+<section class="download">
+
+<button id="downloadBtn" disabled>Download Sorted PDF</button>
+
+</section>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
