@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 
@@ -10,7 +11,9 @@
 <link rel="stylesheet" href="style.css">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 </head>
@@ -19,17 +22,25 @@
 
 <div class="container">
 
-<header>
+<header class="app-header">
 
 <img src="assets/logo.png" class="logo">
 
-<h1>PDF Label Size Sorter</h1>
+<h1 class="app-title">PDF Label Size Sorter</h1>
 
 </header>
 
 <section class="upload-box">
 
+<div id="dropZone" class="drop-zone">
+
+<p class="drop-main">Drag & Drop PDF Here</p>
+
+<p class="drop-sub">or click below to choose file</p>
+
 <input type="file" id="pdfUpload" accept="application/pdf">
+
+</div>
 
 <button id="processBtn">Process PDF</button>
 
@@ -73,6 +84,45 @@ Download Size Wise ZIP
 </div>
 
 <script src="app.js"></script>
+
+<script>
+
+/* ===============================
+   DRAG & DROP PDF UPLOAD
+   =============================== */
+
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("pdfUpload");
+
+dropZone.addEventListener("dragover", (e)=>{
+
+e.preventDefault();
+dropZone.classList.add("drag-active");
+
+});
+
+dropZone.addEventListener("dragleave", ()=>{
+
+dropZone.classList.remove("drag-active");
+
+});
+
+dropZone.addEventListener("drop", (e)=>{
+
+e.preventDefault();
+dropZone.classList.remove("drag-active");
+
+const files = e.dataTransfer.files;
+
+if(files.length){
+
+fileInput.files = files;
+
+}
+
+});
+
+</script>
 
 </body>
 </html>
