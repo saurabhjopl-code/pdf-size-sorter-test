@@ -1,5 +1,7 @@
 const fileInput = document.getElementById("pdfUpload");
-const processBtn = document.getElementById("processBtn");
+if(processBtn){
+processBtn.addEventListener("click", startProcessing);
+}
 const downloadBtn = document.getElementById("downloadBtn");
 const downloadZipBtn = document.getElementById("downloadZipBtn");
 const statusDiv = document.getElementById("status");
@@ -9,6 +11,14 @@ const marketplaceSection = document.getElementById("marketplaceSection");
 const marketplaceLogo = document.getElementById("marketplaceLogo");
 const marketplaceName = document.getElementById("marketplaceName");
 const progressFill = document.getElementById("progressFill");
+
+fileInput.addEventListener("change", () => {
+
+if(fileInput.files.length){
+startProcessing();
+}
+
+});
 
 let sortedPdfBytes;
 let pages = [];
