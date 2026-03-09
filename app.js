@@ -11,11 +11,9 @@ const marketplaceName = document.getElementById("marketplaceName");
 const progressFill = document.getElementById("progressFill");
 
 fileInput.addEventListener("change", () => {
-
 if(fileInput.files.length){
 startProcessing();
 }
-
 });
 
 let sortedPdfBytes;
@@ -28,10 +26,6 @@ const sizeOrder = [
 "XS","S","M","L","XL",
 "XXL","3XL","4XL","5XL","6XL","7XL","8XL","9XL","10XL"
 ];
-
-/* ===============================
-SIZE NORMALIZATION
-=============================== */
 
 function normalizeSize(size){
 
@@ -49,27 +43,45 @@ return "NON-SIZE";
 }
 
 /* ===============================
-LABEL TYPE DETECTION
+MARKETPLACE DETECTION
 =============================== */
 
 function detectLabelType(items){
 
-let fullText = items.map(i=>i.str.toUpperCase()).join(" ");
+let hasSizeHeader = false;
+let hasSkuDescription = false;
+let hasTracking = false;
 
-if(fullText.includes("NYKAA") && fullText.includes("TRACKING NO")){
-return "NYKAA";
+for(let item of items){
+
+const text = item.str.toUpperCase();
+
+if(text === "SIZE") hasSizeHeader = true;
+
+if(text.includes("SKU ID") || text.includes("DESCRIPTION")){
+hasSkuDescription = true;
 }
 
-if(fullText.includes("SKU ID") || fullText.includes("DESCRIPTION")){
-return "FLIPKART";
+if(text.includes("TRACKING NO") || text.includes("OTHER DEDUCTION")){
+hasTracking = true;
 }
+
+}
+
+/* PRIORITY ORDER */
+
+if(hasTracking) return "NYKAA";
+
+if(hasSizeHeader) return "MEESHO";
+
+if(hasSkuDescription) return "FLIPKART";
 
 return "MEESHO";
 
 }
 
 /* ===============================
-MEESHO SIZE EXTRACTOR
+MEESHO SIZE
 =============================== */
 
 function extractMeeshoSize(items){
@@ -120,7 +132,7 @@ return normalizeSize(bestCandidate);
 }
 
 /* ===============================
-FLIPKART SIZE EXTRACTOR
+FLIPKART SIZE
 =============================== */
 
 function extractFlipkartSize(items){
@@ -135,9 +147,7 @@ const match = text.match(skuRegex);
 
 if(match){
 
-const detectedSize = match[2];
-
-return normalizeSize(detectedSize);
+return normalizeSize(match[2]);
 
 }
 
@@ -148,41 +158,41 @@ return "NON-SIZE";
 }
 
 /* ===============================
+NYKAA FILTER
+=============================== */
+
+function isNykaaPage(items){
+
+let hasTracking = false;
+let hasDeduction = false;
+
+for(let item of items){
+
+const text = item.str.toUpperCase();
+
+if(text.includes("TRACKING NO")) hasTracking = true;
+if(text.includes("OTHER DEDUCTION")) hasDeduction = true;
+
+}
+
+return hasTracking && hasDeduction;
+
+}
+
+/* ===============================
 SIZE ROUTER
 =============================== */
 
 function extractSize(items){
 
-if(labelType === "FLIPKART"){
-return extractFlipkartSize(items);
-}
+if(labelType === "FLIPKART") return extractFlipkartSize(items);
 
 return extractMeeshoSize(items);
 
 }
 
 /* ===============================
-NYKAA PAGE FILTER
-=============================== */
-
-function isNykaaValidPage(items){
-
-let text = items.map(i=>i.str.toUpperCase()).join(" ");
-
-if(text.includes("TRACKING NO")){
-return true;
-}
-
-if(text.includes("OTHER DEDUCTION")){
-return true;
-}
-
-return false;
-
-}
-
-/* ===============================
-MAIN PROCESSING
+PROCESSING
 =============================== */
 
 async function startProcessing(){
@@ -198,7 +208,11 @@ statusDiv.innerText = "Reading PDF...";
 
 const arrayBuffer = await file.arrayBuffer();
 
+/* SAFE CLONES */
+
 const pdfBuffer = arrayBuffer.slice(0);
+const buildBuffer = arrayBuffer.slice(0);
+
 const loadingTask = pdfjsLib.getDocument({data: pdfBuffer});
 const pdf = await loadingTask.promise;
 
@@ -225,17 +239,18 @@ if(labelType === "NYKAA"){
 statusDiv.innerText = "Filtering Nykaa pages...";
 
 const { PDFDocument } = PDFLib;
+
 const newPdf = await PDFDocument.create();
-const sourcePdf = await PDFDocument.load(pdfBuffer);
+const existingPdf = await PDFDocument.load(buildBuffer);
 
 for(let i=1;i<=pdf.numPages;i++){
 
 const page = await pdf.getPage(i);
-const text = await page.getTextContent();
+const textContent = await page.getTextContent();
 
-if(isNykaaValidPage(text.items)){
+if(isNykaaPage(textContent.items)){
 
-const [copied] = await newPdf.copyPages(sourcePdf,[i-1]);
+const [copied] = await newPdf.copyPages(existingPdf,[i-1]);
 newPdf.addPage(copied);
 
 }
@@ -244,17 +259,16 @@ newPdf.addPage(copied);
 
 sortedPdfBytes = await newPdf.save();
 
-statusDiv.innerText = "Nykaa PDF cleaned";
-
 downloadBtn.disabled = false;
-downloadZipBtn.style.display = "none";
+
+statusDiv.innerText = "Nykaa pages extracted";
 
 return;
 
 }
 
 /* ===============================
-NORMAL SORT MODE
+NORMAL LABELS
 =============================== */
 
 for(let i = 1; i <= pdf.numPages; i += BATCH_SIZE){
@@ -262,7 +276,9 @@ for(let i = 1; i <= pdf.numPages; i += BATCH_SIZE){
 const batch = [];
 
 for(let j = i; j < i + BATCH_SIZE && j <= pdf.numPages; j++){
+
 batch.push(processPage(pdf, j));
+
 }
 
 const results = await Promise.all(batch);
@@ -283,9 +299,9 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 
 statusDiv.innerText = "Reading page " + Math.min(i+BATCH_SIZE-1, pdf.numPages) + " / " + pdf.numPages;
 
-}
+progressFill.style.width = (i/pdf.numPages)*100 + "%";
 
-/* SORT PAGES */
+}
 
 pages.sort((a,b)=>{
 
@@ -310,7 +326,7 @@ statusDiv.innerText = "Building sorted PDF...";
 const { PDFDocument } = PDFLib;
 
 const newPdf = await PDFDocument.create();
-const existingPdf = await PDFDocument.load(arrayBuffer);
+const existingPdf = await PDFDocument.load(buildBuffer);
 
 for(let p of pages){
 
@@ -331,7 +347,7 @@ statusDiv.innerText = "Sorting complete";
 }
 
 /* ===============================
-PROCESS PAGE
+PROCESS SINGLE PAGE
 =============================== */
 
 async function processPage(pdf, pageNumber){
@@ -349,7 +365,7 @@ size: size
 }
 
 /* ===============================
-SUMMARY TABLE
+SUMMARY
 =============================== */
 
 function renderSummary(counts, otherSizes){
@@ -373,6 +389,17 @@ total += counts[size];
 
 });
 
+otherSizes.forEach(size => {
+
+let row = document.createElement("tr");
+row.innerHTML = `<td>NON-SIZE</td><td>${counts[size]}</td>`;
+
+summaryBody.appendChild(row);
+
+total += counts[size];
+
+});
+
 let totalRow = document.createElement("tr");
 
 totalRow.innerHTML = `
@@ -385,26 +412,85 @@ summaryBody.appendChild(totalRow);
 }
 
 /* ===============================
-DOWNLOAD SORTED PDF
+DOWNLOAD PDF
 =============================== */
 
 downloadBtn.addEventListener("click",()=>{
 
+const originalName = fileInput.files[0].name.replace(".pdf","");
+const newName = originalName + "_sorted.pdf";
+
 const blob = new Blob([sortedPdfBytes],{type:"application/pdf"});
+
 const url = URL.createObjectURL(blob);
 
-const file = fileInput.files[0];
-let name = file.name.replace(".pdf","");
-
 const a = document.createElement("a");
+
 a.href = url;
-a.download = name + "_sorted.pdf";
+a.download = newName;
+
 a.click();
 
 });
 
 /* ===============================
-MARKETPLACE UI
+ZIP EXPORT
+=============================== */
+
+downloadZipBtn.addEventListener("click", async () => {
+
+const file = fileInput.files[0];
+const originalBuffer = await file.arrayBuffer();
+
+const zip = new JSZip();
+const { PDFDocument } = PDFLib;
+
+const sourcePdf = await PDFDocument.load(originalBuffer);
+
+let sizePages = {};
+
+pages.forEach(p => {
+
+if(!sizePages[p.size]){
+sizePages[p.size] = [];
+}
+
+sizePages[p.size].push(p.pageNumber-1);
+
+});
+
+for(const size in sizePages){
+
+const pdfDoc = await PDFDocument.create();
+
+const copiedPages = await pdfDoc.copyPages(
+sourcePdf,
+sizePages[size]
+);
+
+copiedPages.forEach(p => pdfDoc.addPage(p));
+
+const pdfBytes = await pdfDoc.save();
+
+zip.file(size + ".pdf", pdfBytes);
+
+}
+
+const zipBlob = await zip.generateAsync({type:"blob"});
+
+const url = URL.createObjectURL(zipBlob);
+
+const a = document.createElement("a");
+
+a.href = url;
+a.download = "labels_by_size.zip";
+
+a.click();
+
+});
+
+/* ===============================
+MP UI
 =============================== */
 
 function updateMarketplaceUI(type){
