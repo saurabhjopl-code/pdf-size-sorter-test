@@ -9,6 +9,8 @@ const marketplaceLogo = document.getElementById("marketplaceLogo");
 const marketplaceName = document.getElementById("marketplaceName");
 const progressFill = document.getElementById("progressFill");
 
+const turboSwitch = document.getElementById("turboMode");
+
 fileInput.addEventListener("change", () => {
 if(fileInput.files.length){
 startProcessing();
@@ -19,12 +21,18 @@ let sortedPdfBytes;
 let pages = [];
 let labelType = "MEESHO";
 
-const BATCH_SIZE = 5;
+/* ===============================
+Turbo Configuration
+=============================== */
+
+const NORMAL_BATCH = 5;
+const TURBO_BATCH = 20;
 
 const sizeOrder = [
 "XS","S","M","L","XL",
 "XXL","3XL","4XL","5XL","6XL","7XL","8XL","9XL","10XL"
 ];
+
 
 /* ===============================
 SIZE NORMALIZATION
@@ -45,6 +53,7 @@ return "NON-SIZE";
 
 }
 
+
 /* ===============================
 LABEL TYPE DETECTION
 =============================== */
@@ -64,6 +73,7 @@ return "FLIPKART";
 return "MEESHO";
 
 }
+
 
 /* ===============================
 MEESHO SIZE EXTRACTOR
@@ -116,6 +126,7 @@ return normalizeSize(bestCandidate);
 
 }
 
+
 /* ===============================
 FLIPKART SIZE EXTRACTOR
 =============================== */
@@ -144,6 +155,7 @@ return "NON-SIZE";
 
 }
 
+
 /* ===============================
 SIZE ROUTER
 =============================== */
@@ -157,6 +169,7 @@ return extractFlipkartSize(items);
 return extractMeeshoSize(items);
 
 }
+
 
 /* ===============================
 PROCESS SINGLE PAGE
@@ -176,8 +189,9 @@ size: size
 
 }
 
+
 /* ===============================
-MAIN PROCESSING ENGINE
+MAIN PROCESS ENGINE
 =============================== */
 
 async function startProcessing(){
@@ -188,6 +202,8 @@ if(!file){
 alert("Upload PDF first");
 return;
 }
+
+const BATCH_SIZE = turboSwitch && turboSwitch.checked ? TURBO_BATCH : NORMAL_BATCH;
 
 statusDiv.innerText = "Reading PDF...";
 
@@ -202,16 +218,15 @@ pages = [];
 let sizeCount = {};
 let otherSizes = new Set();
 
-/* DETECT MARKETPLACE */
+/* Detect marketplace */
 
 const firstPage = await pdf.getPage(1);
 const firstContent = await firstPage.getTextContent();
 
 labelType = detectLabelType(firstContent.items);
-
 updateMarketplaceUI(labelType);
 
-/* PAGE PROCESSING */
+/* Process pages */
 
 for(let i = 1; i <= pdf.numPages; i += BATCH_SIZE){
 
@@ -240,11 +255,13 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 statusDiv.innerText =
 "Reading page " + Math.min(i+BATCH_SIZE-1, pdf.numPages) + " / " + pdf.numPages;
 
+if(progressFill){
 progressFill.style.width = ((i / pdf.numPages) * 100) + "%";
+}
 
 }
 
-/* SORT */
+/* Sort pages */
 
 pages.sort((a,b)=>{
 
@@ -262,7 +279,8 @@ return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
 
 });
 
-/* BUILD PDF */
+
+/* Build sorted PDF */
 
 statusDiv.innerText = "Building sorted PDF...";
 
@@ -289,8 +307,9 @@ statusDiv.innerText = "Sorting complete";
 
 }
 
+
 /* ===============================
-SUMMARY TABLE
+SUMMARY
 =============================== */
 
 function renderSummary(counts, otherSizes){
@@ -328,7 +347,6 @@ total += counts[size];
 let totalRow = document.createElement("tr");
 
 totalRow.innerHTML = `
-
 <td style="font-weight:bold">Grand Total</td>
 <td style="font-weight:bold">${total}</td>
 `;
@@ -337,21 +355,26 @@ summaryBody.appendChild(totalRow);
 
 }
 
+
 /* ===============================
 DOWNLOAD SORTED PDF
 =============================== */
 
 downloadBtn.addEventListener("click",()=>{
 
+const file = fileInput.files[0];
+const originalName = file.name.replace(".pdf","");
+
 const blob = new Blob([sortedPdfBytes],{type:"application/pdf"});
 const url = URL.createObjectURL(blob);
 
 const a = document.createElement("a");
 a.href = url;
-a.download = "sorted_labels.pdf";
+a.download = originalName + "_sorted.pdf";
 a.click();
 
 });
+
 
 /* ===============================
 ZIP EXPORT
@@ -383,7 +406,10 @@ for(const size in sizePages){
 
 const pdfDoc = await PDFDocument.create();
 
-const copiedPages = await pdfDoc.copyPages(sourcePdf, sizePages[size]);
+const copiedPages = await pdfDoc.copyPages(
+sourcePdf,
+sizePages[size]
+);
 
 copiedPages.forEach(p => pdfDoc.addPage(p));
 
@@ -406,11 +432,14 @@ a.click();
 
 });
 
+
 /* ===============================
-MARKETPLACE LOGO UI
+Marketplace UI
 =============================== */
 
 function updateMarketplaceUI(type){
+
+if(!marketplaceSection) return;
 
 marketplaceSection.style.display = "block";
 
