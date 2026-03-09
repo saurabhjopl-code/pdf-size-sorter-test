@@ -7,32 +7,27 @@ const summaryBody = document.querySelector("#summaryTable tbody");
 const marketplaceSection = document.getElementById("marketplaceSection");
 const marketplaceLogo = document.getElementById("marketplaceLogo");
 const marketplaceName = document.getElementById("marketplaceName");
+
 const progressFill = document.getElementById("progressFill");
 
-const turboSwitch = document.getElementById("turboMode");
-
 fileInput.addEventListener("change", () => {
+
 if(fileInput.files.length){
 startProcessing();
 }
+
 });
 
 let sortedPdfBytes;
 let pages = [];
 let labelType = "MEESHO";
 
-/* ===============================
-Turbo Configuration
-=============================== */
-
-const NORMAL_BATCH = 5;
-const TURBO_BATCH = 20;
+const BATCH_SIZE = 5;
 
 const sizeOrder = [
 "XS","S","M","L","XL",
 "XXL","3XL","4XL","5XL","6XL","7XL","8XL","9XL","10XL"
 ];
-
 
 /* ===============================
 SIZE NORMALIZATION
@@ -53,27 +48,25 @@ return "NON-SIZE";
 
 }
 
-
 /* ===============================
 LABEL TYPE DETECTION
 =============================== */
 
 function detectLabelType(items){
 
-for(let item of items){
+let fullText = items.map(i=>i.str.toUpperCase()).join(" ");
 
-const text = item.str.toUpperCase();
-
-if(text.includes("SKU ID | DESCRIPTION")){
-return "FLIPKART";
+if(fullText.includes("NYKAA") && fullText.includes("TRACKING NO")){
+return "NYKAA";
 }
 
+if(fullText.includes("SKU ID") || fullText.includes("DESCRIPTION")){
+return "FLIPKART";
 }
 
 return "MEESHO";
 
 }
-
 
 /* ===============================
 MEESHO SIZE EXTRACTOR
@@ -126,7 +119,6 @@ return normalizeSize(bestCandidate);
 
 }
 
-
 /* ===============================
 FLIPKART SIZE EXTRACTOR
 =============================== */
@@ -155,7 +147,6 @@ return "NON-SIZE";
 
 }
 
-
 /* ===============================
 SIZE ROUTER
 =============================== */
@@ -170,28 +161,28 @@ return extractMeeshoSize(items);
 
 }
 
-
 /* ===============================
-PROCESS SINGLE PAGE
+NYKAA PAGE FILTER
 =============================== */
 
-async function processPage(pdf, pageNumber){
+function isNykaaValidPage(items){
 
-const page = await pdf.getPage(pageNumber);
-const textContent = await page.getTextContent();
+let text = items.map(i=>i.str.toUpperCase()).join(" ");
 
-let size = extractSize(textContent.items);
+if(text.includes("TRACKING NO")){
+return true;
+}
 
-return {
-pageNumber: pageNumber,
-size: size
-};
+if(text.includes("OTHER DEDUCTION")){
+return true;
+}
+
+return false;
 
 }
 
-
 /* ===============================
-MAIN PROCESS ENGINE
+MAIN PROCESSING
 =============================== */
 
 async function startProcessing(){
@@ -203,14 +194,11 @@ alert("Upload PDF first");
 return;
 }
 
-const BATCH_SIZE = turboSwitch && turboSwitch.checked ? TURBO_BATCH : NORMAL_BATCH;
-
 statusDiv.innerText = "Reading PDF...";
 
 const arrayBuffer = await file.arrayBuffer();
-const pdfBuffer = arrayBuffer.slice(0);
 
-const loadingTask = pdfjsLib.getDocument({data: pdfBuffer});
+const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
 const pdf = await loadingTask.promise;
 
 pages = [];
@@ -218,15 +206,55 @@ pages = [];
 let sizeCount = {};
 let otherSizes = new Set();
 
-/* Detect marketplace */
+/* DETECT LABEL TYPE */
 
 const firstPage = await pdf.getPage(1);
 const firstContent = await firstPage.getTextContent();
 
 labelType = detectLabelType(firstContent.items);
+
 updateMarketplaceUI(labelType);
 
-/* Process pages */
+/* ===============================
+NYKAA MODE
+=============================== */
+
+if(labelType === "NYKAA"){
+
+statusDiv.innerText = "Filtering Nykaa pages...";
+
+const { PDFDocument } = PDFLib;
+const newPdf = await PDFDocument.create();
+const sourcePdf = await PDFDocument.load(arrayBuffer);
+
+for(let i=1;i<=pdf.numPages;i++){
+
+const page = await pdf.getPage(i);
+const text = await page.getTextContent();
+
+if(isNykaaValidPage(text.items)){
+
+const [copied] = await newPdf.copyPages(sourcePdf,[i-1]);
+newPdf.addPage(copied);
+
+}
+
+}
+
+sortedPdfBytes = await newPdf.save();
+
+statusDiv.innerText = "Nykaa PDF cleaned";
+
+downloadBtn.disabled = false;
+downloadZipBtn.style.display = "none";
+
+return;
+
+}
+
+/* ===============================
+NORMAL SORT MODE
+=============================== */
 
 for(let i = 1; i <= pdf.numPages; i += BATCH_SIZE){
 
@@ -252,16 +280,11 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 
 });
 
-statusDiv.innerText =
-"Reading page " + Math.min(i+BATCH_SIZE-1, pdf.numPages) + " / " + pdf.numPages;
-
-if(progressFill){
-progressFill.style.width = ((i / pdf.numPages) * 100) + "%";
-}
+statusDiv.innerText = "Reading page " + Math.min(i+BATCH_SIZE-1, pdf.numPages) + " / " + pdf.numPages;
 
 }
 
-/* Sort pages */
+/* SORT PAGES */
 
 pages.sort((a,b)=>{
 
@@ -279,8 +302,7 @@ return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
 
 });
 
-
-/* Build sorted PDF */
+/* BUILD PDF */
 
 statusDiv.innerText = "Building sorted PDF...";
 
@@ -307,9 +329,26 @@ statusDiv.innerText = "Sorting complete";
 
 }
 
+/* ===============================
+PROCESS PAGE
+=============================== */
+
+async function processPage(pdf, pageNumber){
+
+const page = await pdf.getPage(pageNumber);
+const textContent = await page.getTextContent();
+
+let size = extractSize(textContent.items);
+
+return {
+pageNumber: pageNumber,
+size: size
+};
+
+}
 
 /* ===============================
-SUMMARY
+SUMMARY TABLE
 =============================== */
 
 function renderSummary(counts, otherSizes){
@@ -333,17 +372,6 @@ total += counts[size];
 
 });
 
-otherSizes.forEach(size => {
-
-let row = document.createElement("tr");
-row.innerHTML = `<td>NON-SIZE</td><td>${counts[size]}</td>`;
-
-summaryBody.appendChild(row);
-
-total += counts[size];
-
-});
-
 let totalRow = document.createElement("tr");
 
 totalRow.innerHTML = `
@@ -355,91 +383,30 @@ summaryBody.appendChild(totalRow);
 
 }
 
-
 /* ===============================
 DOWNLOAD SORTED PDF
 =============================== */
 
 downloadBtn.addEventListener("click",()=>{
 
-const file = fileInput.files[0];
-const originalName = file.name.replace(".pdf","");
-
 const blob = new Blob([sortedPdfBytes],{type:"application/pdf"});
 const url = URL.createObjectURL(blob);
 
-const a = document.createElement("a");
-a.href = url;
-a.download = originalName + "_sorted.pdf";
-a.click();
-
-});
-
-
-/* ===============================
-ZIP EXPORT
-=============================== */
-
-downloadZipBtn.addEventListener("click", async () => {
-
 const file = fileInput.files[0];
-const originalBuffer = await file.arrayBuffer();
-
-const zip = new JSZip();
-const { PDFDocument } = PDFLib;
-
-const sourcePdf = await PDFDocument.load(originalBuffer);
-
-let sizePages = {};
-
-pages.forEach(p => {
-
-if(!sizePages[p.size]){
-sizePages[p.size] = [];
-}
-
-sizePages[p.size].push(p.pageNumber-1);
-
-});
-
-for(const size in sizePages){
-
-const pdfDoc = await PDFDocument.create();
-
-const copiedPages = await pdfDoc.copyPages(
-sourcePdf,
-sizePages[size]
-);
-
-copiedPages.forEach(p => pdfDoc.addPage(p));
-
-const pdfBytes = await pdfDoc.save();
-
-zip.file(size + ".pdf", pdfBytes);
-
-}
-
-const zipBlob = await zip.generateAsync({type:"blob"});
-
-const url = URL.createObjectURL(zipBlob);
+let name = file.name.replace(".pdf","");
 
 const a = document.createElement("a");
-
 a.href = url;
-a.download = "labels_by_size.zip";
-
+a.download = name + "_sorted.pdf";
 a.click();
 
 });
 
-
 /* ===============================
-Marketplace UI
+MARKETPLACE UI
 =============================== */
 
 function updateMarketplaceUI(type){
-
-if(!marketplaceSection) return;
 
 marketplaceSection.style.display = "block";
 
@@ -449,6 +416,14 @@ marketplaceLogo.src = "assets/flipkart.png";
 marketplaceName.innerText = "Flipkart Labels";
 
 }
+
+else if(type === "NYKAA"){
+
+marketplaceLogo.src = "assets/nykaa.png";
+marketplaceName.innerText = "Nykaa Labels";
+
+}
+
 else{
 
 marketplaceLogo.src = "assets/meesho.jpg";
