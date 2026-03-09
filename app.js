@@ -198,7 +198,8 @@ statusDiv.innerText = "Reading PDF...";
 
 const arrayBuffer = await file.arrayBuffer();
 
-const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
+const pdfBuffer = arrayBuffer.slice(0);
+const loadingTask = pdfjsLib.getDocument({data: pdfBuffer});
 const pdf = await loadingTask.promise;
 
 pages = [];
@@ -225,7 +226,7 @@ statusDiv.innerText = "Filtering Nykaa pages...";
 
 const { PDFDocument } = PDFLib;
 const newPdf = await PDFDocument.create();
-const sourcePdf = await PDFDocument.load(arrayBuffer);
+const sourcePdf = await PDFDocument.load(pdfBuffer);
 
 for(let i=1;i<=pdf.numPages;i++){
 
