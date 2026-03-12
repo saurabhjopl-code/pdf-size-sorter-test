@@ -9,6 +9,9 @@ const marketplaceLogo = document.getElementById("marketplaceLogo");
 const marketplaceName = document.getElementById("marketplaceName");
 
 const progressFill = document.getElementById("progressFill");
+const totalLabelsEl = document.getElementById("totalLabels");
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec";
 
 fileInput.addEventListener("change", () => {
 if(fileInput.files.length){
@@ -28,23 +31,46 @@ const sizeOrder = [
 ];
 
 /* ===============================
-GOOGLE SHEET LOGGER
+GLOBAL COUNTER
 =============================== */
 
 async function loadTotalLabels(){
 
 try{
 
-const res = await fetch("https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec");
-
+const res = await fetch(SCRIPT_URL);
 const data = await res.json();
 
-document.getElementById("totalLabels").innerText =
-data.total.toLocaleString();
+if(totalLabelsEl){
+totalLabelsEl.innerText = data.total.toLocaleString();
+}
 
 }catch(e){
-
 console.log("Counter load failed");
+}
+
+}
+
+async function updateSheet(marketplace, labels){
+
+try{
+
+await fetch(SCRIPT_URL,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+marketplace: marketplace,
+labels: labels
+})
+});
+
+loadTotalLabels();
+
+}catch(err){
+
+console.log("Sheet update failed",err);
 
 }
 
@@ -205,10 +231,6 @@ return "NON-SIZE";
 
 }
 
-/* ===============================
-SIZE ROUTER
-=============================== */
-
 function extractSize(items){
 
 if(labelType === "FLIPKART"){
@@ -246,8 +268,6 @@ pages = [];
 
 let sizeCount = {};
 let otherSizes = new Set();
-
-/* DETECT LABEL TYPE */
 
 const firstPage = await pdf.getPage(1);
 const firstContent = await firstPage.getTextContent();
@@ -313,7 +333,6 @@ statusDiv.innerText =
 
 downloadBtn.disabled = false;
 
-/* LOG TO GOOGLE SHEET */
 updateSheet("NYKAA", matchedPages);
 
 return;
@@ -376,8 +395,6 @@ sizeOrder.indexOf(b.size);
 
 });
 
-/* BUILD SORTED PDF */
-
 statusDiv.innerText = "Building sorted PDF...";
 
 const { PDFDocument } = PDFLib;
@@ -403,7 +420,6 @@ downloadZipBtn.disabled = false;
 
 statusDiv.innerText = "Sorting complete";
 
-/* LOG TO GOOGLE SHEET */
 updateSheet(labelType, pages.length);
 
 }
@@ -584,8 +600,6 @@ marketplaceName.innerText = "Meesho Labels";
 
 }
 
-
-
-
+/* LOAD COUNTER ON START */
 
 loadTotalLabels();
