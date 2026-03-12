@@ -30,7 +30,7 @@
 
 </header>
 
-<!-- SAAS METRIC COUNTER -->
+<!-- TOTAL LABEL COUNTER -->
 
 <section class="counter">
 
@@ -41,8 +41,35 @@ Total Labels Processed
 </div>
 
 <div id="totalLabels" class="counter-value">
-0
+Loading...
 </div>
+
+</div>
+
+</section>
+
+<!-- MARKETPLACE STATS STRIP -->
+
+<section class="mp-stats">
+
+<div class="mp-card">
+
+<div class="mp-name">Meesho</div>
+<div id="mpMeesho" class="mp-value">0</div>
+
+</div>
+
+<div class="mp-card">
+
+<div class="mp-name">Flipkart</div>
+<div id="mpFlipkart" class="mp-value">0</div>
+
+</div>
+
+<div class="mp-card">
+
+<div class="mp-name">Nykaa</div>
+<div id="mpNykaa" class="mp-value">0</div>
 
 </div>
 
@@ -66,7 +93,7 @@ Total Labels Processed
 
 </label>
 
-<!-- TURBO MODE SWITCH -->
+<!-- TURBO MODE -->
 
 <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;">
 
@@ -154,18 +181,14 @@ const fileNameDisplay = document.getElementById("fileName");
 /* DRAG OVER */
 
 dropZone.addEventListener("dragover",(e)=>{
-
 e.preventDefault();
 dropZone.classList.add("drag-active");
-
 });
 
 /* DRAG LEAVE */
 
 dropZone.addEventListener("dragleave",()=>{
-
 dropZone.classList.remove("drag-active");
-
 });
 
 /* DROP */
@@ -197,65 +220,14 @@ uploadInput.dispatchEvent(new Event("change"));
 uploadInput.addEventListener("change",()=>{
 
 if(uploadInput.files.length){
-
 showFileName(uploadInput.files[0].name);
-
 }
 
 });
 
 function showFileName(name){
-
 fileNameDisplay.innerText = "Loaded File: " + name;
-
 }
-
-/* ========= COUNTER ANIMATION ========= */
-
-function animateCounter(finalValue){
-
-const el = document.getElementById("totalLabels");
-
-let start = 0;
-
-const duration = 1200;
-const stepTime = 20;
-const steps = duration / stepTime;
-const increment = finalValue / steps;
-
-const timer = setInterval(()=>{
-
-start += increment;
-
-if(start >= finalValue){
-start = finalValue;
-clearInterval(timer);
-}
-
-el.innerText = Math.floor(start).toLocaleString();
-
-},stepTime);
-
-}
-
-/* When app.js loads the total, trigger animation */
-
-const observer = new MutationObserver(()=>{
-
-const val = parseInt(
-document.getElementById("totalLabels").innerText.replace(/,/g,"")
-);
-
-if(!isNaN(val)){
-animateCounter(val);
-observer.disconnect();
-}
-
-});
-
-observer.observe(document.getElementById("totalLabels"),{
-childList:true
-});
 
 </script>
 
