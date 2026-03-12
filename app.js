@@ -15,6 +15,10 @@ const mpMeeshoEl = document.getElementById("mpMeesho");
 const mpFlipkartEl = document.getElementById("mpFlipkart");
 const mpNykaaEl = document.getElementById("mpNykaa");
 
+const speedStats = document.getElementById("speedStats");
+const speedValue = document.getElementById("speedValue");
+const etaValue = document.getElementById("etaValue");
+
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec";
 
 fileInput.addEventListener("change", () => {
@@ -35,15 +39,14 @@ const sizeOrder = [
 ];
 
 /* ===============================
-ANIMATE COUNTER
+COUNTER ANIMATION
 =============================== */
 
-function animateCounter(el, finalValue){
+function animateCounter(el, value){
 
 let start = 0;
-const duration = 1000;
 const steps = 30;
-const increment = finalValue / steps;
+const increment = value / steps;
 let count = 0;
 
 const timer = setInterval(()=>{
@@ -52,18 +55,18 @@ count++;
 start += increment;
 
 if(count >= steps){
-start = finalValue;
+start = value;
 clearInterval(timer);
 }
 
 el.innerText = Math.floor(start).toLocaleString();
 
-}, duration/steps);
+},30);
 
 }
 
 /* ===============================
-LOAD GLOBAL COUNTERS
+LOAD GLOBAL STATS
 =============================== */
 
 async function loadTotalLabels(){
@@ -87,7 +90,7 @@ console.log("Counter load failed");
 }
 
 /* ===============================
-UPDATE GOOGLE SHEET
+UPDATE SHEET
 =============================== */
 
 async function updateSheet(marketplace, labels){
@@ -107,9 +110,7 @@ labels: labels
 });
 
 }catch(err){
-
 console.log("Sheet update failed");
-
 }
 
 }
@@ -155,6 +156,7 @@ hasSkuDescription = true;
 
 if(text.includes("TRACKING NO") || text.includes("OTHER DEDUCTION")){
 hasTracking = true;
+
 }
 
 }
@@ -286,6 +288,10 @@ const file = fileInput.files[0];
 
 statusDiv.innerText = "Reading PDF...";
 
+const startTime = Date.now();
+
+if(speedStats) speedStats.style.display = "block";
+
 const arrayBuffer = await file.arrayBuffer();
 
 const pdfBuffer = arrayBuffer.slice(0);
@@ -311,8 +317,6 @@ NYKAA MODE
 =============================== */
 
 if(labelType === "NYKAA"){
-
-statusDiv.innerText = "Scanning Nykaa pages...";
 
 const { PDFDocument } = PDFLib;
 const newPdf = await PDFDocument.create();
@@ -353,7 +357,7 @@ return;
 }
 
 /* ===============================
-NORMAL LABEL PROCESSING
+NORMAL PROCESSING
 =============================== */
 
 for(let i = 1; i <= pdf.numPages; i += BATCH_SIZE){
@@ -386,11 +390,17 @@ statusDiv.innerText = "Reading page " + currentPage + " / " + pdf.numPages;
 
 progressFill.style.width = (currentPage/pdf.numPages)*100 + "%";
 
-}
+/* SPEED CALCULATION */
 
-/* ===============================
-SORT
-=============================== */
+const elapsed = (Date.now() - startTime)/1000;
+const speed = currentPage / elapsed;
+const remaining = pdf.numPages - currentPage;
+const eta = remaining / speed;
+
+if(speedValue) speedValue.innerText = speed.toFixed(1);
+if(etaValue) etaValue.innerText = Math.max(0,Math.round(eta));
+
+}
 
 pages.sort((a,b)=>{
 
@@ -408,9 +418,7 @@ return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
 
 });
 
-/* ===============================
-BUILD PDF
-=============================== */
+/* BUILD PDF */
 
 statusDiv.innerText = "Building sorted PDF...";
 
@@ -428,7 +436,7 @@ newPdf.addPage(copied);
 
 sortedPdfBytes = await newPdf.save();
 
-renderSummary(sizeCount, otherSizes);
+renderSummary(sizeCount);
 
 downloadBtn.disabled = false;
 downloadZipBtn.disabled = false;
@@ -440,7 +448,7 @@ updateSheet(labelType, pages.length);
 }
 
 /* ===============================
-PROCESS SINGLE PAGE
+PROCESS PAGE
 =============================== */
 
 async function processPage(pdf, pageNumber){
@@ -461,7 +469,7 @@ size: size
 SUMMARY
 =============================== */
 
-function renderSummary(counts, otherSizes){
+function renderSummary(counts){
 
 summaryBody.innerHTML = "";
 
@@ -542,8 +550,6 @@ marketplaceName.innerText = "Meesho Labels";
 
 }
 
-/* ===============================
-LOAD COUNTER
-=============================== */
+/* LOAD COUNTERS */
 
 loadTotalLabels();
