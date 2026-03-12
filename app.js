@@ -31,30 +31,20 @@ const sizeOrder = [
 GOOGLE SHEET LOGGER
 =============================== */
 
-async function updateSheet(marketplace, labels){
+async function loadTotalLabels(){
 
 try{
 
-await fetch("https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec",{
+const res = await fetch("https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec");
 
-method:"POST",
+const data = await res.json();
 
-headers:{
-"Content-Type":"application/json"
-},
+document.getElementById("totalLabels").innerText =
+data.total.toLocaleString();
 
-body: JSON.stringify({
-marketplace: marketplace,
-labels: labels
-})
+}catch(e){
 
-});
-
-console.log("Sheet updated");
-
-}catch(err){
-
-console.log("Sheet update failed",err);
+console.log("Counter load failed");
 
 }
 
