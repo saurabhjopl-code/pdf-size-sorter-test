@@ -9,7 +9,11 @@ const marketplaceLogo = document.getElementById("marketplaceLogo");
 const marketplaceName = document.getElementById("marketplaceName");
 
 const progressFill = document.getElementById("progressFill");
+
 const totalLabelsEl = document.getElementById("totalLabels");
+const mpMeeshoEl = document.getElementById("mpMeesho");
+const mpFlipkartEl = document.getElementById("mpFlipkart");
+const mpNykaaEl = document.getElementById("mpNykaa");
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec";
 
@@ -31,7 +35,35 @@ const sizeOrder = [
 ];
 
 /* ===============================
-GLOBAL COUNTER
+ANIMATE COUNTER
+=============================== */
+
+function animateCounter(el, finalValue){
+
+let start = 0;
+const duration = 1000;
+const steps = 30;
+const increment = finalValue / steps;
+let count = 0;
+
+const timer = setInterval(()=>{
+
+count++;
+start += increment;
+
+if(count >= steps){
+start = finalValue;
+clearInterval(timer);
+}
+
+el.innerText = Math.floor(start).toLocaleString();
+
+}, duration/steps);
+
+}
+
+/* ===============================
+LOAD GLOBAL COUNTERS
 =============================== */
 
 async function loadTotalLabels(){
@@ -41,15 +73,22 @@ try{
 const res = await fetch(SCRIPT_URL);
 const data = await res.json();
 
-if(totalLabelsEl){
-totalLabelsEl.innerText = data.total.toLocaleString();
-}
+if(totalLabelsEl) animateCounter(totalLabelsEl, data.total || 0);
+if(mpMeeshoEl) animateCounter(mpMeeshoEl, data.meesho || 0);
+if(mpFlipkartEl) animateCounter(mpFlipkartEl, data.flipkart || 0);
+if(mpNykaaEl) animateCounter(mpNykaaEl, data.nykaa || 0);
 
 }catch(e){
+
 console.log("Counter load failed");
+
 }
 
 }
+
+/* ===============================
+UPDATE GOOGLE SHEET
+=============================== */
 
 async function updateSheet(marketplace, labels){
 
@@ -67,11 +106,9 @@ labels: labels
 })
 });
 
-console.log("Sheet updated");
-
 }catch(err){
 
-console.log("Sheet update failed",err);
+console.log("Sheet update failed");
 
 }
 
@@ -136,8 +173,6 @@ NYKAA PAGE CHECK
 
 function isNykaaPage(items){
 
-let keep = false;
-
 for(let item of items){
 
 const text = item.str.toUpperCase();
@@ -148,12 +183,12 @@ text.includes("OTHER DEDUCTION") ||
 text.includes("SHIPPING/CUSTOMER ADDRESS") ||
 text.includes("ORDER ID")
 ){
-keep = true;
+return true;
 }
 
 }
 
-return keep;
+return false;
 
 }
 
@@ -219,7 +254,6 @@ const skuRegex = /([A-Z0-9]{6,})-(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|8XL|9XL|10
 for(let item of items){
 
 const text = item.str.trim();
-
 const match = text.match(skuRegex);
 
 if(match){
@@ -249,11 +283,6 @@ PROCESSING
 async function startProcessing(){
 
 const file = fileInput.files[0];
-
-if(!file){
-alert("Upload PDF first");
-return;
-}
 
 statusDiv.innerText = "Reading PDF...";
 
@@ -286,7 +315,6 @@ if(labelType === "NYKAA"){
 statusDiv.innerText = "Scanning Nykaa pages...";
 
 const { PDFDocument } = PDFLib;
-
 const newPdf = await PDFDocument.create();
 const existingPdf = await PDFDocument.load(buildBuffer);
 
@@ -294,20 +322,16 @@ let matchedPages = 0;
 
 for(let i=1;i<=pdf.numPages;i++){
 
-statusDiv.innerText =
-"Scanning page " + i + " / " + pdf.numPages;
+statusDiv.innerText = "Scanning page " + i + " / " + pdf.numPages;
 
-progressFill.style.width =
-(i/pdf.numPages)*100 + "%";
+progressFill.style.width = (i/pdf.numPages)*100 + "%";
 
 const page = await pdf.getPage(i);
 const textContent = await page.getTextContent();
 
 if(isNykaaPage(textContent.items)){
 
-const [copied] =
-await newPdf.copyPages(existingPdf,[i-1]);
-
+const [copied] = await newPdf.copyPages(existingPdf,[i-1]);
 newPdf.addPage(copied);
 
 matchedPages++;
@@ -316,21 +340,9 @@ matchedPages++;
 
 }
 
-if(matchedPages === 0){
-
-statusDiv.innerText =
-"No Nykaa label pages detected.";
-
-downloadBtn.disabled = true;
-
-return;
-
-}
-
 sortedPdfBytes = await newPdf.save();
 
-statusDiv.innerText =
-"Nykaa labels extracted: " + matchedPages + " pages";
+statusDiv.innerText = "Nykaa labels extracted: " + matchedPages + " pages";
 
 downloadBtn.disabled = false;
 
@@ -368,16 +380,17 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 
 });
 
-statusDiv.innerText =
-"Reading page " +
-Math.min(i+BATCH_SIZE-1, pdf.numPages)
+const currentPage = Math.min(i + BATCH_SIZE - 1, pdf.numPages);
 
-* " / " + pdf.numPages;
+statusDiv.innerText = "Reading page " + currentPage + " / " + pdf.numPages;
 
-progressFill.style.width =
-(i/pdf.numPages)*100 + "%";
+progressFill.style.width = (currentPage/pdf.numPages)*100 + "%";
 
 }
+
+/* ===============================
+SORT
+=============================== */
 
 pages.sort((a,b)=>{
 
@@ -391,10 +404,13 @@ return a.size.localeCompare(b.size);
 if(!aInBucket) return 1;
 if(!bInBucket) return -1;
 
-return sizeOrder.indexOf(a.size) -
-sizeOrder.indexOf(b.size);
+return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
 
 });
+
+/* ===============================
+BUILD PDF
+=============================== */
 
 statusDiv.innerText = "Building sorted PDF...";
 
@@ -405,9 +421,7 @@ const existingPdf = await PDFDocument.load(buildBuffer);
 
 for(let p of pages){
 
-const [copied] =
-await newPdf.copyPages(existingPdf,[p.pageNumber-1]);
-
+const [copied] = await newPdf.copyPages(existingPdf,[p.pageNumber-1]);
 newPdf.addPage(copied);
 
 }
@@ -468,17 +482,6 @@ total += counts[size];
 
 });
 
-otherSizes.forEach(size => {
-
-let row = document.createElement("tr");
-row.innerHTML = `<td>NON-SIZE</td><td>${counts[size]}</td>`;
-
-summaryBody.appendChild(row);
-
-total += counts[size];
-
-});
-
 let totalRow = document.createElement("tr");
 
 totalRow.innerHTML = `
@@ -492,80 +495,20 @@ summaryBody.appendChild(totalRow);
 }
 
 /* ===============================
-DOWNLOAD PDF
+DOWNLOAD
 =============================== */
 
 downloadBtn.addEventListener("click",()=>{
 
-const originalName =
-fileInput.files[0].name.replace(".pdf","");
-
+const originalName = fileInput.files[0].name.replace(".pdf","");
 const newName = originalName + "_sorted.pdf";
 
-const blob =
-new Blob([sortedPdfBytes],{type:"application/pdf"});
-
+const blob = new Blob([sortedPdfBytes],{type:"application/pdf"});
 const url = URL.createObjectURL(blob);
 
 const a = document.createElement("a");
-
 a.href = url;
 a.download = newName;
-
-a.click();
-
-});
-
-/* ===============================
-ZIP EXPORT
-=============================== */
-
-downloadZipBtn.addEventListener("click", async () => {
-
-const file = fileInput.files[0];
-const originalBuffer = await file.arrayBuffer();
-
-const zip = new JSZip();
-const { PDFDocument } = PDFLib;
-
-const sourcePdf = await PDFDocument.load(originalBuffer);
-
-let sizePages = {};
-
-pages.forEach(p => {
-
-if(!sizePages[p.size]){
-sizePages[p.size] = [];
-}
-
-sizePages[p.size].push(p.pageNumber-1);
-
-});
-
-for(const size in sizePages){
-
-const pdfDoc = await PDFDocument.create();
-
-const copiedPages =
-await pdfDoc.copyPages(sourcePdf,sizePages[size]);
-
-copiedPages.forEach(p => pdfDoc.addPage(p));
-
-const pdfBytes = await pdfDoc.save();
-
-zip.file(size + ".pdf", pdfBytes);
-
-}
-
-const zipBlob = await zip.generateAsync({type:"blob"});
-
-const url = URL.createObjectURL(zipBlob);
-
-const a = document.createElement("a");
-
-a.href = url;
-a.download = "labels_by_size.zip";
-
 a.click();
 
 });
@@ -584,14 +527,12 @@ marketplaceLogo.src = "assets/flipkart.png";
 marketplaceName.innerText = "Flipkart Labels";
 
 }
-
 else if(type === "NYKAA"){
 
 marketplaceLogo.src = "assets/nykaa.png";
 marketplaceName.innerText = "Nykaa Labels";
 
 }
-
 else{
 
 marketplaceLogo.src = "assets/meesho.jpg";
@@ -601,6 +542,8 @@ marketplaceName.innerText = "Meesho Labels";
 
 }
 
-/* LOAD COUNTER */
+/* ===============================
+LOAD COUNTER
+=============================== */
 
 loadTotalLabels();
