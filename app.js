@@ -34,25 +34,37 @@ const sizeOrder = [
 GLOBAL COUNTER
 =============================== */
 
+async function loadTotalLabels(){
+
+try{
+
+const res = await fetch(SCRIPT_URL);
+const data = await res.json();
+
+if(totalLabelsEl){
+totalLabelsEl.innerText = data.total.toLocaleString();
+}
+
+}catch(e){
+console.log("Counter load failed");
+}
+
+}
+
 async function updateSheet(marketplace, labels){
 
 try{
 
-await fetch("https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec",{
-
+await fetch(SCRIPT_URL,{
 method:"POST",
-
 mode:"no-cors",
-
 headers:{
 "Content-Type":"application/json"
 },
-
 body: JSON.stringify({
 marketplace: marketplace,
 labels: labels
 })
-
 });
 
 console.log("Sheet updated");
@@ -64,7 +76,6 @@ console.log("Sheet update failed",err);
 }
 
 }
-
 
 /* ===============================
 SIZE NORMALIZATION
@@ -590,6 +601,6 @@ marketplaceName.innerText = "Meesho Labels";
 
 }
 
-/* LOAD COUNTER ON START */
+/* LOAD COUNTER */
 
 loadTotalLabels();
