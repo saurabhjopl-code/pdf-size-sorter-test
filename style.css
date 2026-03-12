@@ -252,3 +252,32 @@ width:0%;
 background:#4f7cff;
 transition:width 0.3s;
 }
+
+.counter{
+display:flex;
+justify-content:center;
+margin:20px 0 10px 0;
+}
+
+.counter-card{
+background:#ffffff;
+border-radius:12px;
+padding:16px 28px;
+text-align:center;
+box-shadow:0 6px 18px rgba(0,0,0,0.08);
+border:1px solid #e8e8e8;
+min-width:260px;
+}
+
+.counter-label{
+font-size:13px;
+color:#777;
+margin-bottom:6px;
+letter-spacing:0.5px;
+}
+
+.counter-value{
+font-size:34px;
+font-weight:700;
+color:#2f5bd1;
+}
