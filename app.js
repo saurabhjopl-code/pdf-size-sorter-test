@@ -557,6 +557,39 @@ else{
 marketplaceLogo.src = "assets/meesho.jpg";
 marketplaceName.innerText = "Meesho Labels";
 
+/* ===============================
+Counting
+=============================== */
+
+  async function updateSheet(marketplace, labels){
+
+try{
+
+await fetch("https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body: JSON.stringify({
+marketplace: marketplace,
+labels: labels
+})
+
+});
+
+console.log("Sheet updated");
+
+}catch(err){
+
+console.log("Sheet update failed",err);
+
+}
+
+}
+
 }
 
 }
