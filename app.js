@@ -583,3 +583,9 @@ marketplaceName.innerText = "Meesho Labels";
 }
 
 }
+
+
+
+
+
+loadTotalLabels();
