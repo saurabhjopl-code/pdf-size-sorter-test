@@ -30,7 +30,7 @@
 
 </header>
 
-<!-- TOTAL LABEL COUNTER -->
+<!-- SAAS METRIC COUNTER -->
 
 <section class="counter">
 
@@ -41,7 +41,7 @@ Total Labels Processed
 </div>
 
 <div id="totalLabels" class="counter-value">
-Loading...
+0
 </div>
 
 </div>
@@ -209,6 +209,53 @@ function showFileName(name){
 fileNameDisplay.innerText = "Loaded File: " + name;
 
 }
+
+/* ========= COUNTER ANIMATION ========= */
+
+function animateCounter(finalValue){
+
+const el = document.getElementById("totalLabels");
+
+let start = 0;
+
+const duration = 1200;
+const stepTime = 20;
+const steps = duration / stepTime;
+const increment = finalValue / steps;
+
+const timer = setInterval(()=>{
+
+start += increment;
+
+if(start >= finalValue){
+start = finalValue;
+clearInterval(timer);
+}
+
+el.innerText = Math.floor(start).toLocaleString();
+
+},stepTime);
+
+}
+
+/* When app.js loads the total, trigger animation */
+
+const observer = new MutationObserver(()=>{
+
+const val = parseInt(
+document.getElementById("totalLabels").innerText.replace(/,/g,"")
+);
+
+if(!isNaN(val)){
+animateCounter(val);
+observer.disconnect();
+}
+
+});
+
+observer.observe(document.getElementById("totalLabels"),{
+childList:true
+});
 
 </script>
 
