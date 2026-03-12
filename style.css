@@ -281,3 +281,32 @@ font-size:34px;
 font-weight:700;
 color:#2f5bd1;
 }
+.mp-stats{
+display:flex;
+justify-content:center;
+gap:18px;
+margin-bottom:20px;
+}
+
+.mp-card{
+background:#ffffff;
+border-radius:10px;
+padding:12px 18px;
+text-align:center;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+min-width:120px;
+border:1px solid #ececec;
+}
+
+.mp-name{
+font-size:13px;
+color:#777;
+margin-bottom:4px;
+}
+
+.mp-value{
+font-size:22px;
+font-weight:600;
+color:#2f5bd1;
+}
+
