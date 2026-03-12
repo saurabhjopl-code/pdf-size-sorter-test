@@ -28,6 +28,39 @@ const sizeOrder = [
 ];
 
 /* ===============================
+GOOGLE SHEET LOGGER
+=============================== */
+
+async function updateSheet(marketplace, labels){
+
+try{
+
+await fetch("https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body: JSON.stringify({
+marketplace: marketplace,
+labels: labels
+})
+
+});
+
+console.log("Sheet updated");
+
+}catch(err){
+
+console.log("Sheet update failed",err);
+
+}
+
+}
+
+/* ===============================
 SIZE NORMALIZATION
 =============================== */
 
@@ -73,9 +106,7 @@ hasTracking = true;
 }
 
 if(hasTracking) return "NYKAA";
-
 if(hasSizeHeader) return "MEESHO";
-
 if(hasSkuDescription) return "FLIPKART";
 
 return "MEESHO";
@@ -175,9 +206,7 @@ const text = item.str.trim();
 const match = text.match(skuRegex);
 
 if(match){
-
 return normalizeSize(match[2]);
-
 }
 
 }
@@ -216,8 +245,6 @@ return;
 statusDiv.innerText = "Reading PDF...";
 
 const arrayBuffer = await file.arrayBuffer();
-
-/* SAFE BUFFERS */
 
 const pdfBuffer = arrayBuffer.slice(0);
 const buildBuffer = arrayBuffer.slice(0);
@@ -278,8 +305,6 @@ matchedPages++;
 
 }
 
-/* SAFETY CHECK */
-
 if(matchedPages === 0){
 
 statusDiv.innerText =
@@ -297,6 +322,9 @@ statusDiv.innerText =
 "Nykaa labels extracted: " + matchedPages + " pages";
 
 downloadBtn.disabled = false;
+
+/* LOG TO GOOGLE SHEET */
+updateSheet("NYKAA", matchedPages);
 
 return;
 
@@ -333,7 +361,8 @@ sizeCount[size] = (sizeCount[size] || 0) + 1;
 statusDiv.innerText =
 "Reading page " +
 Math.min(i+BATCH_SIZE-1, pdf.numPages)
-+ " / " + pdf.numPages;
+
+* " / " + pdf.numPages;
 
 progressFill.style.width =
 (i/pdf.numPages)*100 + "%";
@@ -383,6 +412,9 @@ downloadBtn.disabled = false;
 downloadZipBtn.disabled = false;
 
 statusDiv.innerText = "Sorting complete";
+
+/* LOG TO GOOGLE SHEET */
+updateSheet(labelType, pages.length);
 
 }
 
@@ -443,6 +475,7 @@ total += counts[size];
 let totalRow = document.createElement("tr");
 
 totalRow.innerHTML = `
+
 <td style="font-weight:bold">Grand Total</td>
 <td style="font-weight:bold">${total}</td>
 `;
@@ -556,39 +589,6 @@ else{
 
 marketplaceLogo.src = "assets/meesho.jpg";
 marketplaceName.innerText = "Meesho Labels";
-
-/* ===============================
-Counting
-=============================== */
-
-  async function updateSheet(marketplace, labels){
-
-try{
-
-await fetch("https://script.google.com/macros/s/AKfycbz33JaDBH2bZjvSjH0H2d71s3h1tD0HrpnExkHJMFfovfuqMsuO7NFYmse3UJ9lxkrMcw/exec",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body: JSON.stringify({
-marketplace: marketplace,
-labels: labels
-})
-
-});
-
-console.log("Sheet updated");
-
-}catch(err){
-
-console.log("Sheet update failed",err);
-
-}
-
-}
 
 }
 
